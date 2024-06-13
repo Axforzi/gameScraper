@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block head%} 
+{{ super() }}
+<link rel="stylesheet" href="{{url_for('static', filename='css/ofertas.css')}}">
+<link rel="stylesheet" href="{{url_for('static', filename='css/responsive.css')}}">
+{% endblock %}
+
+{% block title %} Ofertas {% endblock %}
+
+{% block main %}
+<h2>Ofertas de steam</h2>
+<div class="ofertas-steam">
+    <div class="loading w-100 text-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+</div>
+<a class="btn btn-success mb-2 d-none btn-steam" target="_blank" href="https://store.steampowered.com/search/?category1=998&os=win&specials=1&ndl=1"> Ver más en steam... </a>
+
+<h2>Ofertas de Epic Games</h2>
+<div class="ofertas-egs">
+    <div class="loading w-100 text-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+</div>
+<a class="btn btn-success mb-2 d-none btn-egs" target="_blank" href="https://store.epicgames.com/es-ES/browse?sortBy=releaseDate&sortDir=DESC&tag=Superoferta%20de%20Epic&category=Game&count=40&start=0"> Ver más en Epic Games... </a>
+
+<h2>Ofertas de GOG</h2>
+<div class="ofertas-gog">
+    <div class="loading w-100 text-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+</div>
+<a class="btn btn-success mb-2 d-none btn-gog" target="_blank" href="https://www.gog.com/en/games?discounted=true"> Ver más en gog... </a>
+
+<template class="oferta-template">
+    <div class="oferta">
+        <div class="img">
+            <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1551360/header.jpg?t=1717876415" alt="steam-img">
+        </div>
+        <div class="content">
+            <div class="info">
+                <h3 class="nombre"> Forza Horizon 5 <span class="descuento"> -50% </span> </h3>
+                <div class="container-price">
+                    <p><span class="precio"> 15$ </span></p>
+                    <p><span class="final"> 7.5$ </span></p>
+                </div>
+            </div>
+            <a href="" target="_blank" class="btn btn-success link"> <span class="material-symbols-outlined">arrow_forward</span></a>
+        </div>
+    </div>
+</template>
+
+<script>
+    const steamOfertas = document.querySelector('.ofertas-steam');
+    const gogOfertas = document.querySelector('.ofertas-gog');
+    const egsOfertas = document.querySelector('.ofertas-egs');
+
+    const ofertaTemplate = document.querySelector('.oferta-template').content;
+    const ofertasFragment = document.createDocumentFragment();
+
+    const getOfertas = async () => {
+        const res = await fetch('/ofertas', {
+            method: 'POST',
+            headers: {'content-type': 'application/json'}
+        });
+        const json = await res.json();
+        
+        json.steam.forEach(element => {
+            const clone = ofertaTemplate.cloneNode(true);
+            clone.querySelector('.nombre').innerText = element.nombre;
+            clone.querySelector('img').src = element.img;
+            clone.querySelector('a').href = element.link;
+
+            // OBTENER PORCENTAJE
+            const porcentaje = 100 - ((element.descuento * 100) / element.precio);
+            clone.querySelector('.nombre').innerHTML = `<span class='descuento'> -${porcentaje.toFixed(2)}% </span>` + clone.querySelector('.nombre').innerHTML;
+            clone.querySelector('.precio').innerText = `${element.precio}$`;
+            clone.querySelector('.final').innerText = `${element.descuento}$`;
+
+            ofertasFragment.appendChild(clone)
+        });
+        steamOfertas.innerHTML = '';
+        steamOfertas.appendChild(ofertasFragment);
+        document.querySelector('.btn-steam').classList.toggle('d-none');
+
+        json.egs.forEach(element => {
+            const clone = ofertaTemplate.cloneNode(true);
+            clone.querySelector('.nombre').innerText = element.nombre;
+            clone.querySelector('img').src = element.img;
+            clone.querySelector('a').href = element.link;
+
+            // OBTENER PORCENTAJE
+            const porcentaje = 100 - ((element.descuento * 100) / element.precio);
+            clone.querySelector('.nombre').innerHTML = `<span class='descuento'> -${porcentaje.toFixed(2)}% </span>` + clone.querySelector('.nombre').innerHTML;
+            clone.querySelector('.precio').innerText = `${element.precio}$`;
+            clone.querySelector('.final').innerText = `${element.descuento}$`;
+
+            ofertasFragment.appendChild(clone)
+        });
+        egsOfertas.innerHTML = '';
+        egsOfertas.appendChild(ofertasFragment);
+        document.querySelector('.btn-egs').classList.toggle('d-none');
+
+        json.gog.forEach(element => {
+            const clone = ofertaTemplate.cloneNode(true);
+            clone.querySelector('.nombre').innerText = element.nombre;
+            clone.querySelector('img').src = element.img;
+            clone.querySelector('a').href = element.link;
+
+            // OBTENER PORCENTAJE
+            const porcentaje = 100 - ((element.descuento * 100) / element.precio);
+            clone.querySelector('.nombre').innerHTML = `<span class='descuento'> -${porcentaje.toFixed(2)}% </span>` + clone.querySelector('.nombre').innerHTML;
+            clone.querySelector('.precio').innerText = `${element.precio}$`;
+            clone.querySelector('.final').innerText = `${element.descuento}$`;
+
+            ofertasFragment.appendChild(clone)
+        });
+        gogOfertas.innerHTML = '';
+        gogOfertas.appendChild(ofertasFragment);
+        document.querySelector('.btn-gog').classList.toggle('d-none');
+    }
+
+    getOfertas();
+</script>
+
+{% endblock %}

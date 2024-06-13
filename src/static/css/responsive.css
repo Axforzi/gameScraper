@@ -1,0 +1,36 @@
+@media screen and (max-width: 991px) {
+    /* INPUT JUEGO  */
+    .form-game span, .form-game{
+        width: 100%;
+    }
+
+    /* MODAL */
+    #modalJuegos .plataformas > div{
+        grid-template-columns: auto;
+        grid-template-rows: 80% 20%;
+        padding-bottom: 25px;
+        padding-top: 25px;
+        height: auto;
+    }
+
+    /* CARDS JUEGOS */
+    .ofertas-steam .oferta{
+        img{
+            height: 150px;
+        }
+        .nombre{
+            font-size: 15px;
+            width: 240px;
+        }
+    }
+
+    .ofertas-gog .oferta{
+        .content{
+            gap: 10px;
+        }
+        .nombre{
+            font-size: 15px;
+            width: auto;
+        }
+    }
+}

@@ -1,0 +1,190 @@
+h2{
+    color: white;
+}
+
+main{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    gap: 20px;
+}
+
+.ofertas-steam{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+}
+
+.ofertas-steam .oferta{
+    background: #4f4a6163;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: white;
+    border-radius: 10px;
+    overflow: hidden;
+
+    img{
+        height: 200px;
+    }
+    .content{
+        display: flex;
+        padding: 10px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+    .nombre{
+        display: flex;
+        flex-wrap: wrap;
+        flex-direction: row;
+        gap: 5px;
+        font-size: 1.2rem;
+        width: 350px;
+        align-items: center;
+        text-overflow: ellipsis;
+    }
+    .descuento{
+        background: #221E33;
+        padding: 2px;
+        border-radius: 5px;
+    }
+    .container-price{
+        display: flex;
+        font-size: 1.5rem;
+        gap: 20px;
+    }
+    .precio{
+        text-decoration: line-through;
+        font-size: 1.2rem;
+    }
+    .link{
+        display: flex;
+    }
+}
+
+.ofertas-gog{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+}
+
+.ofertas-gog .oferta{
+    display: flex;
+    background: #4f4a6163;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: white;
+    border-radius: 10px;
+    overflow: hidden;
+
+    img{
+        height: 200px;
+    }
+    .img{
+        display: flex;
+        justify-content: center;
+    }
+    .content{
+        display: flex;
+        padding: 10px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+    .nombre{
+        display: flex;
+        flex-wrap: wrap;
+        flex-direction: row;
+        gap: 5px;
+        font-size: 1.2rem;
+        width: 350px;
+        align-items: center;
+        text-overflow: ellipsis;
+    }
+    .descuento{
+        background: #221E33;
+        padding: 2px;
+        border-radius: 5px;
+    }
+    .container-price{
+        display: flex;
+        font-size: 1.5rem;
+        gap: 20px;
+    }
+    .precio{
+        text-decoration: line-through;
+        font-size: 1.2rem;
+    }
+    .link{
+        display: flex;
+    }
+}
+
+.ofertas-egs{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+}
+
+.ofertas-egs .oferta{
+    display: flex;
+    flex-direction: column;
+    background: #4f4a6163;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: white;
+    border-radius: 10px;
+    overflow: hidden;
+    align-self: stretch;
+    margin: 0 50px;
+
+    img{
+        height: 400px;
+    }
+    .img{
+        display: flex;
+        justify-content: center;
+    }
+    .content{
+        display: flex;
+        padding: 10px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        height: 100%;
+    }
+    .nombre{
+        display: flex;
+        flex-wrap: wrap;
+        flex-direction: row;
+        gap: 5px;
+        font-size: 1.2rem;
+        width: 220px;
+        align-items: center;
+        text-overflow: ellipsis;
+    }
+    .descuento{
+        background: #221E33;
+        padding: 2px;
+        border-radius: 5px;
+    }
+    .container-price{
+        display: flex;
+        font-size: 1.5rem;
+        gap: 20px;
+    }
+    .precio{
+        text-decoration: line-through;
+        font-size: 1.2rem;
+    }
+    .link{
+        display: flex;
+    }
+}

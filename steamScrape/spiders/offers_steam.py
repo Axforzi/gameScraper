@@ -1,4 +1,6 @@
 import scrapy
+from bs4 import BeautifulSoup
+import requests
 from ..items import Juego
 
 class OffersSteamSpider(scrapy.Spider):
@@ -18,9 +20,13 @@ class OffersSteamSpider(scrapy.Spider):
 
             # GET IMG LINK
             img = element.css("img::attr('src')").get().split('/')
-            img[-1] = "header.jpg"
             img = '/'.join(img)
             game['img'] = img
+
+            session = requests.Session()
+            r = session.get(game['link'])
+            soup = BeautifulSoup(r.text, 'html.parser')
+            game['img'] = soup.find('img', {'class': 'game_header_image_full'}).get('src')
 
             games.append(dict(game))
 

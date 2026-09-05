@@ -1,0 +1,9 @@
+# Line endings: normalize all text files to LF
+* text=auto eol=lf
+
+# Binary artifacts must never be line-ending normalized
+*.pyc binary
+*.pyo binary
+*.png binary
+*.jpg binary
+*.jpeg binary

@@ -11,20 +11,38 @@ const getOfertas = async () => {
         headers: {'content-type': 'application/json'}
     });
     const json = await res.json();
+
+    if (!res.ok) {
+        const errorBox = document.createElement('h2');
+        errorBox.style.color = 'white';
+        errorBox.style.fontStyle = 'italic';
+        errorBox.style.marginBottom = '20px';
+        errorBox.textContent = json.error || 'Error al consultar ofertas';
+        const steamContainer = document.querySelector('.ofertas-steam');
+        steamContainer.textContent = '';
+        steamContainer.appendChild(errorBox);
+        return;
+    }
     
     try {
         json.steam.forEach(element => {
             const clone = ofertaTemplate.cloneNode(true);
-            clone.querySelector('.nombre').innerText = element.nombre;
-            clone.querySelector('img').src = element.img;
-            clone.querySelector('a').href = element.link;
-    
+            const nombreEl = clone.querySelector('.nombre');
             // OBTENER PORCENTAJE
             const porcentaje = 100 - ((element.descuento * 100) / element.precio);
-            clone.querySelector('.nombre').innerHTML = `<span class='descuento'> -${porcentaje.toFixed(2)}% </span>` + clone.querySelector('.nombre').innerHTML;
+
+            // ESCRIBIR NOMBRE Y PORCENTAJE COMO TEXTO (sin innerHTML con datos)
+            const descuentoBadge = document.createElement('span');
+            descuentoBadge.className = 'descuento';
+            descuentoBadge.textContent = ` -${porcentaje.toFixed(2)}% `;
+            nombreEl.textContent = element.nombre;
+            nombreEl.prepend(descuentoBadge);
+
+            clone.querySelector('img').src = element.img;
+            clone.querySelector('a').href = element.link;
             clone.querySelector('.precio').innerText = `${element.precio}$`;
             clone.querySelector('.final').innerText = `${element.descuento}$`;
-    
+
             ofertasFragment.appendChild(clone)
         });
         steamOfertas.innerHTML = '';
@@ -38,16 +56,22 @@ const getOfertas = async () => {
     try {
         json.egs.forEach(element => {
             const clone = ofertaTemplate.cloneNode(true);
-            clone.querySelector('.nombre').innerText = element.nombre;
-            clone.querySelector('img').src = element.img;
-            clone.querySelector('a').href = element.link;
-    
+            const nombreEl = clone.querySelector('.nombre');
             // OBTENER PORCENTAJE
             const porcentaje = 100 - ((element.descuento * 100) / element.precio);
-            clone.querySelector('.nombre').innerHTML = `<span class='descuento'> -${porcentaje.toFixed(2)}% </span>` + clone.querySelector('.nombre').innerHTML;
+
+            // ESCRIBIR NOMBRE Y PORCENTAJE COMO TEXTO (sin innerHTML con datos)
+            const descuentoBadge = document.createElement('span');
+            descuentoBadge.className = 'descuento';
+            descuentoBadge.textContent = ` -${porcentaje.toFixed(2)}% `;
+            nombreEl.textContent = element.nombre;
+            nombreEl.prepend(descuentoBadge);
+
+            clone.querySelector('img').src = element.img;
+            clone.querySelector('a').href = element.link;
             clone.querySelector('.precio').innerText = `${element.precio}$`;
             clone.querySelector('.final').innerText = `${element.descuento}$`;
-    
+
             ofertasFragment.appendChild(clone)
         });
         egsOfertas.innerHTML = '';
@@ -61,16 +85,22 @@ const getOfertas = async () => {
     try {
         json.gog.forEach(element => {
             const clone = ofertaTemplate.cloneNode(true);
-            clone.querySelector('.nombre').innerText = element.nombre;
-            clone.querySelector('img').src = element.img;
-            clone.querySelector('a').href = element.link;
-    
+            const nombreEl = clone.querySelector('.nombre');
             // OBTENER PORCENTAJE
             const porcentaje = 100 - ((element.descuento * 100) / element.precio);
-            clone.querySelector('.nombre').innerHTML = `<span class='descuento'> -${porcentaje.toFixed(2)}% </span>` + clone.querySelector('.nombre').innerHTML;
+
+            // ESCRIBIR NOMBRE Y PORCENTAJE COMO TEXTO (sin innerHTML con datos)
+            const descuentoBadge = document.createElement('span');
+            descuentoBadge.className = 'descuento';
+            descuentoBadge.textContent = ` -${porcentaje.toFixed(2)}% `;
+            nombreEl.textContent = element.nombre;
+            nombreEl.prepend(descuentoBadge);
+
+            clone.querySelector('img').src = element.img;
+            clone.querySelector('a').href = element.link;
             clone.querySelector('.precio').innerText = `${element.precio}$`;
             clone.querySelector('.final').innerText = `${element.descuento}$`;
-    
+
             ofertasFragment.appendChild(clone)
         });
         gogOfertas.innerHTML = '';

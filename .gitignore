@@ -4,6 +4,3 @@ env/
 # Python bytecode
 __pycache__/
 *.pyc
-
-# SDD / tooling caches
-.atl/

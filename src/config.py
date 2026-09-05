@@ -34,7 +34,7 @@ class Settings:
         environ: dict[str, str] | None = None,
         *,
         require_secret: bool = True,
-    ) -> "Settings":
+    ) -> Settings:
         """Read configuration from ``environ`` (defaults to ``os.environ``).
 
         Fails fast when ``SECRET_KEY`` is missing in a non-debug environment

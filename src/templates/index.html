@@ -9,6 +9,7 @@
         <input type="text" name="game-link" id="game" class="form-control shadow-none" placeholder="Nombre del juego"
             autocomplete="off">
     </span>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button class="btn material-symbols-outlined search-btn"> search </button>
 </form>
 
@@ -109,6 +110,7 @@
         const form = new FormData(document.querySelector('.form-game'));
         const res = await fetch('/juego', {
             method: 'POST',
+            headers: { 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content },
             body: form,
         });
         const data = await res.json()

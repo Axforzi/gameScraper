@@ -8,7 +8,10 @@ const ofertasFragment = document.createDocumentFragment();
 const getOfertas = async () => {
     const res = await fetch('/ofertas', {
         method: 'POST',
-        headers: {'content-type': 'application/json'}
+        headers: {
+            'content-type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+        }
     });
     const json = await res.json();
 

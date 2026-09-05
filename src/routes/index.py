@@ -6,7 +6,7 @@ import crochet
 import nh3
 from flask import Blueprint, jsonify, render_template, request
 
-from triggers import TriggerGame, TriggerOffers
+from src.triggers import TriggerGame, TriggerOffers
 
 index = Blueprint('index', __name__)
 

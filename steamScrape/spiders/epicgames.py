@@ -1,6 +1,7 @@
 import scrapy
 from scrapy.utils.log import configure_logging
 from ..items import Juego
+from src.config import Settings
 import json
 import re
 import roman
@@ -12,9 +13,11 @@ class EpicgamesSpider(scrapy.Spider):
     juego = ''
 
     def __init__(self, juego, *args, **kwargs):
-        super(EpicgamesSpider).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+        cfg = Settings.from_env(require_secret=False)
         self.juego = ' '.join(re.findall(r'[a-zA-Z0-9]+', juego))
-        url = f"https://store.epicgames.com/graphql?operationName=searchStoreQuery&variables=%7B%22allowCountries%22:%22VE%22,%22category%22:%22games%2Fedition%2Fbase%22,%22count%22:40,%22country%22:%22VE%22,%22keywords%22:%22{self.juego}%22,%22locale%22:%22es-ES%22,%22sortBy%22:%22relevancy,viewableDate%22,%22sortDir%22:%22DESC,DESC%22,%22start%22:0,%22tag%22:%229547%22,%22withPrice%22:true%7D&extensions=%7B%22persistedQuery%22:%7B%22version%22:1,%22sha256Hash%22:%227d58e12d9dd8cb14c84a3ff18d360bf9f0caa96bf218f2c5fda68ba88d68a437%22%7D%7D"
+        self.locale = cfg.locale
+        url = f"https://store.epicgames.com/graphql?operationName=searchStoreQuery&variables=%7B%22allowCountries%22:%22{cfg.country}%22,%22category%22:%22games%2Fedition%2Fbase%22,%22count%22:40,%22country%22:%22{cfg.country}%22,%22keywords%22:%22{self.juego}%22,%22locale%22:%22{cfg.locale}%22,%22sortBy%22:%22relevancy,viewableDate%22,%22sortDir%22:%22DESC,DESC%22,%22start%22:0,%22tag%22:%229547%22,%22withPrice%22:true%7D&extensions=%7B%22persistedQuery%22:%7B%22version%22:1,%22sha256Hash%22:%227d58e12d9dd8cb14c84a3ff18d360bf9f0caa96bf218f2c5fda68ba88d68a437%22%7D%7D"
         self.start_urls = [url]
 
     def start_requests(self):
@@ -48,7 +51,7 @@ class EpicgamesSpider(scrapy.Spider):
             game['precio'] = element['price']['totalPrice']['fmtPrice']['originalPrice']
             game['descripcion'] = element['description']
             game['descuento'] = element['price']['totalPrice']['fmtPrice']['discountPrice']
-            game['link'] = 'https://store.epicgames.com/es-ES/p/' + element['catalogNs']['mappings'][0]['pageSlug']
+            game['link'] = f'https://store.epicgames.com/{self.locale}/p/' + element['catalogNs']['mappings'][0]['pageSlug']
             game['img'] = element['keyImages'][2]['url']
 
             # CLEAN PRICES

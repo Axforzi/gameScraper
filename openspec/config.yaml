@@ -1,0 +1,41 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Python 3, Flask 3.1, Scrapy 2.12, Crochet (Twisted bridge)
+  Architecture: Monolith — Flask web app + Scrapy spiders in same repo
+  Testing: None detected (no test runner, no test files, no config)
+  Style: No linter/formatter/type-checker configured
+  WSGI: Waitress
+  Templating: Jinja2
+
+strict_tdd: false
+
+projects:
+  - path: "."
+    stack: "python"
+    test_command: "—"
+    framework: "—"
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    guidelines:
+      - Follow existing code patterns
+    tdd: false
+    test_command: ""
+  verify:
+    test_command: ""
+    build_command: ""
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas

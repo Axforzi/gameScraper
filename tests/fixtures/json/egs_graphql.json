@@ -1,0 +1,20 @@
+{
+  "data": {
+    "Catalog": {
+      "searchStore": {
+        "elements": [
+          {"title": "Final Fantasy IV", "description": "A classic RPG.", "price": {"totalPrice": {"fmtPrice": {"originalPrice": "59,99\u00a0US$", "discountPrice": "29,99\u00a0US$"}}}, "catalogNs": {"mappings": [{"pageSlug": "final-fantasy-iv"}]}, "keyImages": [{"url": "https://cdn.epic/a.jpg"}, {"url": "https://cdn.epic/b.jpg"}, {"url": "https://cdn.epic/ff4.jpg"}]},
+          {"title": "Filler Game Two", "description": "Two.", "price": {"totalPrice": {"fmtPrice": {"originalPrice": "9,99\u00a0US$", "discountPrice": "9,99\u00a0US$"}}}, "catalogNs": {"mappings": [{"pageSlug": "filler-two"}]}, "keyImages": [{"url": "https://cdn.epic/a.jpg"}, {"url": "https://cdn.epic/b.jpg"}, {"url": "https://cdn.epic/f2.jpg"}]},
+          {"title": "Filler Game Three", "description": "Three.", "price": {"totalPrice": {"fmtPrice": {"originalPrice": "8,99\u00a0US$", "discountPrice": "7,99\u00a0US$"}}}, "catalogNs": {"mappings": [{"pageSlug": "filler-three"}]}, "keyImages": [{"url": "https://cdn.epic/a.jpg"}, {"url": "https://cdn.epic/b.jpg"}, {"url": "https://cdn.epic/f3.jpg"}]},
+          {"title": "Filler Game Four", "description": "Four.", "price": {"totalPrice": {"fmtPrice": {"originalPrice": "7,99\u00a0US$", "discountPrice": "6,99\u00a0US$"}}}, "catalogNs": {"mappings": [{"pageSlug": "filler-four"}]}, "keyImages": [{"url": "https://cdn.epic/a.jpg"}, {"url": "https://cdn.epic/b.jpg"}, {"url": "https://cdn.epic/f4.jpg"}]},
+          {"title": "Filler Game Five", "description": "Five.", "price": {"totalPrice": {"fmtPrice": {"originalPrice": "6,99\u00a0US$", "discountPrice": "5,99\u00a0US$"}}}, "catalogNs": {"mappings": [{"pageSlug": "filler-five"}]}, "keyImages": [{"url": "https://cdn.epic/a.jpg"}, {"url": "https://cdn.epic/b.jpg"}, {"url": "https://cdn.epic/f5.jpg"}]},
+          {"title": "Filler Game Six", "description": "Six.", "price": {"totalPrice": {"fmtPrice": {"originalPrice": "5,99\u00a0US$", "discountPrice": "4,99\u00a0US$"}}}, "catalogNs": {"mappings": [{"pageSlug": "filler-six"}]}, "keyImages": [{"url": "https://cdn.epic/a.jpg"}, {"url": "https://cdn.epic/b.jpg"}, {"url": "https://cdn.epic/f6.jpg"}]},
+          {"title": "Filler Game Seven", "description": "Seven.", "price": {"totalPrice": {"fmtPrice": {"originalPrice": "4,99\u00a0US$", "discountPrice": "3,99\u00a0US$"}}}, "catalogNs": {"mappings": [{"pageSlug": "filler-seven"}]}, "keyImages": [{"url": "https://cdn.epic/a.jpg"}, {"url": "https://cdn.epic/b.jpg"}, {"url": "https://cdn.epic/f7.jpg"}]},
+          {"title": "Filler Game Eight", "description": "Eight.", "price": {"totalPrice": {"fmtPrice": {"originalPrice": "3,99\u00a0US$", "discountPrice": "2,99\u00a0US$"}}}, "catalogNs": {"mappings": [{"pageSlug": "filler-eight"}]}, "keyImages": [{"url": "https://cdn.epic/a.jpg"}, {"url": "https://cdn.epic/b.jpg"}, {"url": "https://cdn.epic/f8.jpg"}]},
+          {"title": "Filler Game Nine", "description": "Nine.", "price": {"totalPrice": {"fmtPrice": {"originalPrice": "Gratis", "discountPrice": "Gratis"}}}, "catalogNs": {"mappings": [{"pageSlug": "filler-nine"}]}, "keyImages": [{"url": "https://cdn.epic/a.jpg"}, {"url": "https://cdn.epic/b.jpg"}, {"url": "https://cdn.epic/f9.jpg"}]},
+          {"title": "Filler Game Ten", "description": "Ten.", "price": {"totalPrice": {"fmtPrice": {"originalPrice": "2,99\u00a0US$", "discountPrice": "1,99\u00a0US$"}}}, "catalogNs": {"mappings": [{"pageSlug": "filler-ten"}]}, "keyImages": [{"url": "https://cdn.epic/a.jpg"}, {"url": "https://cdn.epic/b.jpg"}, {"url": "https://cdn.epic/f10.jpg"}]}
+        ]
+      }
+    }
+  }
+}

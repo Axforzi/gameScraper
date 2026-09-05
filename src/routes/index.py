@@ -1,7 +1,9 @@
 import logging
 import re
+import urllib.parse
 
 import crochet
+import nh3
 from flask import Blueprint, jsonify, render_template, request
 
 from triggers import TriggerGame, TriggerOffers
@@ -12,6 +14,10 @@ logger = logging.getLogger(__name__)
 
 GAME_LINK_MAX_LENGTH = 200
 GAME_LINK_PATTERN = re.compile(r"^[A-Za-z0-9 \-\&'.,:!()+]+$")
+
+_URI_SCHEMES = ("http", "https")
+_TEXT_FIELDS = ("nombre", "descripcion")
+_URI_FIELDS = ("link", "img")
 
 TIMEOUT_JUEGO_MSG = "La búsqueda tardó demasiado. Intenta de nuevo."
 TIMEOUT_OFERTAS_MSG = "La consulta de ofertas tardó demasiado. Intenta de nuevo."
@@ -42,7 +48,40 @@ def _payload_with_errors(result, scrape):
     """Attach per-store errors to a 200 partial response (REQ-ASM-3)."""
     payload = dict(result)
     if scrape.errors:
-        payload['errors'] = scrape.errors
+        payload['errors'] = [
+            [name, _sanitize_text(reason)] for name, reason in scrape.errors
+        ]
+    return payload
+
+
+def _sanitize_text(value):
+    """Reduce a spider-provided text field to plain text (REQ-SEC-1)."""
+    if not isinstance(value, str):
+        return value
+    return nh3.clean(value, tags=set())
+
+
+def _sanitize_uri(value):
+    """Allow only http(s) URIs so javascript:/data: links are dropped."""
+    if not isinstance(value, str):
+        return value
+    scheme = urllib.parse.urlsplit(value).scheme.lower()
+    return value if scheme in _URI_SCHEMES else None
+
+
+def _sanitize_payload(payload):
+    """Walk a response payload, cleaning spider-provided strings (REQ-SEC-1)."""
+    if isinstance(payload, dict):
+        return {
+            key: _sanitize_uri(value)
+            if key in _URI_FIELDS
+            else _sanitize_text(value)
+            if key in _TEXT_FIELDS
+            else _sanitize_payload(value)
+            for key, value in payload.items()
+        }
+    if isinstance(payload, list):
+        return [_sanitize_payload(item) for item in payload]
     return payload
 
 
@@ -68,14 +107,15 @@ def get_juego():
         result = scrape.parse_data(term.strip())
     except crochet.TimeoutError:
         logger.warning("juego request timed out; partial=%s", scrape.items)
-        return jsonify({**scrape.items, 'error': TIMEOUT_JUEGO_MSG}), 504
+        return jsonify(_sanitize_payload({**scrape.items, 'error': TIMEOUT_JUEGO_MSG})), 504
     except Exception:
         logger.exception("juego trigger failed for term=%r", term)
         return jsonify({'error': FAILED_JUEGO_MSG}), 502
 
     if _total_failure(result, scrape):
-        return jsonify({'error': FAILED_JUEGO_MSG, 'errors': scrape.errors}), 502
-    return jsonify(_payload_with_errors(result, scrape))
+        errors = [[name, _sanitize_text(reason)] for name, reason in scrape.errors]
+        return jsonify({'error': FAILED_JUEGO_MSG, 'errors': errors}), 502
+    return jsonify(_sanitize_payload(_payload_with_errors(result, scrape)))
 
 
 @index.route('/ofertas')
@@ -90,11 +130,12 @@ def get_ofertas():
         result = scrape.parse_data()
     except crochet.TimeoutError:
         logger.warning("ofertas request timed out; partial=%s", scrape.items)
-        return jsonify({**scrape.items, 'error': TIMEOUT_OFERTAS_MSG}), 504
+        return jsonify(_sanitize_payload({**scrape.items, 'error': TIMEOUT_OFERTAS_MSG})), 504
     except Exception:
         logger.exception("ofertas trigger failed")
         return jsonify({'error': FAILED_OFERTAS_MSG}), 502
 
     if _total_failure(result, scrape):
-        return jsonify({'error': FAILED_OFERTAS_MSG, 'errors': scrape.errors}), 502
-    return jsonify(_payload_with_errors(result, scrape))
+        errors = [[name, _sanitize_text(reason)] for name, reason in scrape.errors]
+        return jsonify({'error': FAILED_OFERTAS_MSG, 'errors': errors}), 502
+    return jsonify(_sanitize_payload(_payload_with_errors(result, scrape)))

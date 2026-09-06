@@ -4,9 +4,18 @@ import urllib.parse
 
 import crochet
 import nh3
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, current_app, jsonify, render_template, request
 
-from triggers import TriggerGame, TriggerOffers
+from src.triggers import TriggerRunner
+from steamScrape.spiders.epicgames import EpicgamesSpider
+from steamScrape.spiders.gog import GogSpider
+from steamScrape.spiders.offers_egs import OffersEgsSpider
+from steamScrape.spiders.offers_gog import OffersGogSpider
+from steamScrape.spiders.offers_steam import OffersSteamSpider
+from steamScrape.spiders.steam import SteamSpider
+
+GAME_SPIDERS = [SteamSpider, GogSpider, EpicgamesSpider]
+OFFER_SPIDERS = [OffersSteamSpider, OffersGogSpider, OffersEgsSpider]
 
 index = Blueprint('index', __name__)
 
@@ -102,9 +111,13 @@ def get_juego():
     if error:
         return jsonify({'error': error}), 400
 
-    scrape = TriggerGame()
+    scrape = TriggerRunner(
+        GAME_SPIDERS,
+        term=term.strip(),
+        timeout=current_app.config["SPIDER_TIMEOUT"],
+    )
     try:
-        result = scrape.parse_data(term.strip())
+        result = scrape.run()
     except crochet.TimeoutError:
         logger.warning("juego request timed out; partial=%s", scrape.items)
         return jsonify(_sanitize_payload({**scrape.items, 'error': TIMEOUT_JUEGO_MSG})), 504
@@ -125,9 +138,9 @@ def get_ofertas_page():
 
 @index.route('/ofertas', methods=['POST'])
 def get_ofertas():
-    scrape = TriggerOffers()
+    scrape = TriggerRunner(OFFER_SPIDERS, timeout=current_app.config["SPIDER_TIMEOUT"])
     try:
-        result = scrape.parse_data()
+        result = scrape.run()
     except crochet.TimeoutError:
         logger.warning("ofertas request timed out; partial=%s", scrape.items)
         return jsonify(_sanitize_payload({**scrape.items, 'error': TIMEOUT_OFERTAS_MSG})), 504

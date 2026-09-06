@@ -1,5 +1,6 @@
 import scrapy
 from ..items import Juego
+from src.config import Settings
 import json
 import re
 import roman
@@ -8,9 +9,10 @@ class GogSpider(scrapy.Spider):
     name = "gog"
 
     def __init__(self, juego, *args, **kwargs):
-        super(GogSpider).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+        cfg = Settings.from_env(require_secret=False)
         self.juego = ' '.join(re.findall(r'[a-zA-Z0-9]+', juego))
-        self.start_urls = [f'https://catalog.gog.com/v1/catalog?limit=48&query=like%3A{self.juego}&order=asc%3Atitle&productType=in%3Agame%2Cpack%2C&page=1&countryCode=US&locale=en-US&currencyCode=USD']
+        self.start_urls = [f'https://catalog.gog.com/v1/catalog?limit=48&query=like%3A{self.juego}&order=asc%3Atitle&productType=in%3Agame%2Cpack%2C&page=1&countryCode={cfg.gog_country}&locale={cfg.gog_locale}&currencyCode={cfg.gog_currency}']
 
     def start_requests(self):
         for url in self.start_urls:

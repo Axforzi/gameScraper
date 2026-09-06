@@ -1,17 +1,19 @@
 from typing import Any, Iterable
 import scrapy
 from ..items import Juego
+from src.config import Settings
 import re
 
 class SteamSpider(scrapy.Spider):
     name = "steam"
 
     cookiesConfig = {"birthtime": "1008392401", "lastagecheckage": "15-December-2001"}
-    headersConfig = {"Accept-Language" : "es-ES,es;q=0.9"}
 
     def __init__(self, juego, *args, **kwargs: Any):
-        super(SteamSpider).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+        cfg = Settings.from_env(require_secret=False)
         self.juego = ' '.join(re.findall(r'[a-zA-Z0-9]+', juego))
+        self.headersConfig = {"Accept-Language": f"{cfg.locale},es;q=0.9"}
         self.start_urls = [f'https://store.steampowered.com/search/?term={self.juego}&category1=998&os=win&hidef2p=1&ndl=1']
 
     def start_requests(self):

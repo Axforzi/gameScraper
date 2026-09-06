@@ -1,6 +1,4 @@
 import scrapy
-from bs4 import BeautifulSoup
-import requests
 from ..items import Juego
 
 class OffersSteamSpider(scrapy.Spider):
@@ -11,23 +9,27 @@ class OffersSteamSpider(scrapy.Spider):
         game = Juego()
         content = response.xpath("//div[@class='search_results']//a[@data-gpnav='item']")[0:10]
 
-        games = []
         for element in content:
             game['nombre'] = element.css('.title::text').get().strip()
             game['precio'] = float(element.css('.discount_original_price::text').get().strip().replace('$', ''))
             game['descuento'] = float(element.css('.discount_final_price::text').get().strip().replace('$', ''))
             game['link'] = element.css("::attr('href')").get()
 
-            # GET IMG LINK
-            img = element.css("img::attr('src')").get().split('/')
-            img = '/'.join(img)
-            game['img'] = img
+            # GET IMG LINK (search-page thumbnail as fallback)
+            game['img'] = element.css("img::attr('src')").get()
 
-            session = requests.Session()
-            r = session.get(game['link'])
-            soup = BeautifulSoup(r.text, 'html.parser')
-            game['img'] = soup.find('img', {'class': 'game_header_image_full'}).get('src')
+            # Follow each game page through the reactor to grab the full cover
+            # instead of blocking with requests/BeautifulSoup.
+            yield scrapy.Request(
+                game['link'],
+                callback=self.parse_offer,
+                meta={'game': dict(game)},
+                dont_filter=True,
+            )
 
-            games.append(dict(game))
-
-        yield {'steam': games}
+    def parse_offer(self, response):
+        game = response.meta['game']
+        cover = response.css('img.game_header_image_full::attr(src)').get()
+        if cover:
+            game['img'] = cover
+        yield {'steam': [game]}

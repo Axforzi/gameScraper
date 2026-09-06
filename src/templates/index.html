@@ -9,6 +9,7 @@
         <input type="text" name="game-link" id="game" class="form-control shadow-none" placeholder="Nombre del juego"
             autocomplete="off">
     </span>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button class="btn material-symbols-outlined search-btn"> search </button>
 </form>
 
@@ -109,16 +110,26 @@
         const form = new FormData(document.querySelector('.form-game'));
         const res = await fetch('/juego', {
             method: 'POST',
+            headers: { 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content },
             body: form,
         });
         const data = await res.json()
+
+        if (!res.ok) {
+            modalContent.textContent = '';
+            const errorTitle = document.createElement('h1');
+            errorTitle.setAttribute('align', 'center');
+            errorTitle.textContent = data.error || 'No se encontraron datos!';
+            modalContent.appendChild(errorTitle);
+            return;
+        }
 
         // INFO STEAM
         console.log(data);
         const clone = templateJuego.cloneNode(true);
         if (data.steam !== null) {
-            clone.querySelector('.titulo').innerHTML = data.steam.nombre;
-            clone.querySelector('.descripcion').innerHTML = data.steam.descripcion;
+            clone.querySelector('.titulo').textContent = data.steam.nombre || '';
+            clone.querySelector('.descripcion').textContent = data.steam.descripcion || '';
             clone.querySelector('img').src = data.steam.img;
             clone.querySelector('img').style.minHeight = '200px';
 
@@ -140,11 +151,11 @@
         const titulo = clone.querySelector('.titulo').innerText.trim()
         // INFO EGS
         if (data.egs !== null) {
-            clone.querySelector('.titulo').innerHTML = data.egs.nombre;
+            clone.querySelector('.titulo').textContent = data.egs.nombre || '';
 
             // VERIFICAR DESCRIPCION
             if (clone.querySelector('.descripcion').innerText.trim() === 'descripcion') {
-                clone.querySelector('.descripcion').innerHTML = data.egs.descripcion;
+                clone.querySelector('.descripcion').textContent = data.egs.descripcion || '';
             }
 
             // VERIFICAR COVER
@@ -171,11 +182,11 @@
 
         // INFO GOG
         if (data.gog !== null){
-            clone.querySelector('.titulo').innerHTML = data.gog.nombre;
+            clone.querySelector('.titulo').textContent = data.gog.nombre || '';
 
             // VERIFICAR DESCRIPCION
             if (clone.querySelector('.descripcion').innerText.trim() === 'descripcion') {
-                clone.querySelector('.descripcion').innerHTML = data.gog.descripcion;
+                clone.querySelector('.descripcion').textContent = data.gog.descripcion || '';
             }
 
             // VERIFICAR COVER

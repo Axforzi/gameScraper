@@ -1,0 +1,14 @@
+{
+  "products": [
+    {"title": "The Witcher 3: Wild Hunt", "price": {"base": "$39.99", "final": "$19.99"}, "storeLink": "https://www.gog.com/game/the_witcher_3_wild_hunt", "coverVertical": "https://images.gog.com/witcher3.jpg"},
+    {"title": "Final Fantasy IV", "price": {"base": "$49.99", "final": "$24.99"}, "storeLink": "https://www.gog.com/game/final_fantasy_iv", "coverVertical": "https://images.gog.com/ff4.jpg"},
+    {"title": "Filler Game Two", "price": {"base": "$9.99", "final": "$9.99"}, "storeLink": "https://www.gog.com/game/filler_two", "coverVertical": "https://images.gog.com/f2.jpg"},
+    {"title": "Filler Game Three", "price": {"base": "$8.99", "final": "$7.99"}, "storeLink": "https://www.gog.com/game/filler_three", "coverVertical": "https://images.gog.com/f3.jpg"},
+    {"title": "Filler Game Four", "price": {"base": "$7.99", "final": "$6.99"}, "storeLink": "https://www.gog.com/game/filler_four", "coverVertical": "https://images.gog.com/f4.jpg"},
+    {"title": "Filler Game Five", "price": {"base": "$6.99", "final": "$5.99"}, "storeLink": "https://www.gog.com/game/filler_five", "coverVertical": "https://images.gog.com/f5.jpg"},
+    {"title": "Filler Game Six", "price": {"base": "$5.99", "final": "$4.99"}, "storeLink": "https://www.gog.com/game/filler_six", "coverVertical": "https://images.gog.com/f6.jpg"},
+    {"title": "Filler Game Seven", "price": {"base": "$4.99", "final": "$3.99"}, "storeLink": "https://www.gog.com/game/filler_seven", "coverVertical": "https://images.gog.com/f7.jpg"},
+    {"title": "Filler Game Eight", "price": {"base": "$3.99", "final": "$2.99"}, "storeLink": "https://www.gog.com/game/filler_eight", "coverVertical": "https://images.gog.com/f8.jpg"},
+    {"title": "Filler Game Nine", "price": {"base": "Free", "final": "Free"}, "storeLink": "https://www.gog.com/game/filler_nine", "coverVertical": "https://images.gog.com/f9.jpg"}
+  ]
+}

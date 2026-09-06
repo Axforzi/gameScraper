@@ -5,6 +5,7 @@
 
 import scrapy
 
+
 class Juego(scrapy.Item):
     nombre = scrapy.Field()
     descripcion = scrapy.Field()

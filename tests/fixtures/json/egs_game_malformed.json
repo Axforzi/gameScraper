@@ -1,0 +1,11 @@
+{
+  "data": {
+    "Catalog": {
+      "searchStore": {
+        "elements": [
+          {"title": "Free Game", "description": "A free game.", "price": {"totalPrice": {"fmtPrice": {"originalPrice": "Gratis", "discountPrice": "Gratis"}}}, "catalogNs": {"mappings": [{"pageSlug": "free-game"}]}, "keyImages": [{"url": "https://cdn.epic/a.jpg"}, {"url": "https://cdn.epic/b.jpg"}, {"url": "https://cdn.epic/free.jpg"}]}
+        ]
+      }
+    }
+  }
+}

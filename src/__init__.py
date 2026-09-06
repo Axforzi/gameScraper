@@ -1,0 +1,1 @@
+"""gameScraper Flask application package (REQ-PKG-1)."""

@@ -10,7 +10,6 @@ from waitress import serve
 from src.app import create_app
 from src.config import Settings
 
-
 if __name__ == "__main__":
     settings = Settings.from_env()
     app = create_app(settings)

@@ -7,9 +7,10 @@ spider list, never a hardcoded count.
 """
 
 import logging
+from typing import Any
 
-import scrapy
 import crochet
+import scrapy
 from scrapy import signals
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.project import get_project_settings
@@ -39,8 +40,8 @@ class TriggerRunner:
         self.spiders = list(spiders)
         self.term = term
         self.timeout = timeout
-        self.items = {}
-        self._errors = []
+        self.items: dict[str, Any] = {}
+        self._errors: list[tuple[str, str]] = []
         self._state = "PENDING"
 
     @property

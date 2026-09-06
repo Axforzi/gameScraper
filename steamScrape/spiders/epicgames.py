@@ -1,20 +1,33 @@
-import scrapy
-from scrapy.utils.log import configure_logging
-from ..items import Juego
-import json
-import re
-import roman
+"""Epic Games Store search spider (single-element match flow).
 
-#configure_logging({"LOG_FORMAT": "%(levelname)s: %(message)s"})
+Malformed prices are logged and yield ``{'egs': None}`` instead of crashing
+the crawl (REQ-TST-4).
+"""
+
+import json
+import logging
+import re
+
+import roman
+import scrapy
+
+from src.config import Settings
+
+from ..items import Juego
+
+logger = logging.getLogger(__name__)
+
 
 class EpicgamesSpider(scrapy.Spider):
     name = "epicgames"
-    juego = ''
+    juego = ""
 
     def __init__(self, juego, *args, **kwargs):
-        super(EpicgamesSpider).__init__(*args, **kwargs)
-        self.juego = ' '.join(re.findall(r'[a-zA-Z0-9]+', juego))
-        url = f"https://store.epicgames.com/graphql?operationName=searchStoreQuery&variables=%7B%22allowCountries%22:%22VE%22,%22category%22:%22games%2Fedition%2Fbase%22,%22count%22:40,%22country%22:%22VE%22,%22keywords%22:%22{self.juego}%22,%22locale%22:%22es-ES%22,%22sortBy%22:%22relevancy,viewableDate%22,%22sortDir%22:%22DESC,DESC%22,%22start%22:0,%22tag%22:%229547%22,%22withPrice%22:true%7D&extensions=%7B%22persistedQuery%22:%7B%22version%22:1,%22sha256Hash%22:%227d58e12d9dd8cb14c84a3ff18d360bf9f0caa96bf218f2c5fda68ba88d68a437%22%7D%7D"
+        super().__init__(*args, **kwargs)
+        cfg = Settings.from_env(require_secret=False)
+        self.juego = " ".join(re.findall(r"[a-zA-Z0-9]+", juego))
+        self.locale = cfg.locale
+        url = f"https://store.epicgames.com/graphql?operationName=searchStoreQuery&variables=%7B%22allowCountries%22:%22{cfg.country}%22,%22category%22:%22games%2Fedition%2Fbase%22,%22count%22:40,%22country%22:%22{cfg.country}%22,%22keywords%22:%22{self.juego}%22,%22locale%22:%22{cfg.locale}%22,%22sortBy%22:%22relevancy,viewableDate%22,%22sortDir%22:%22DESC,DESC%22,%22start%22:0,%22tag%22:%229547%22,%22withPrice%22:true%7D&extensions=%7B%22persistedQuery%22:%7B%22version%22:1,%22sha256Hash%22:%227d58e12d9dd8cb14c84a3ff18d360bf9f0caa96bf218f2c5fda68ba88d68a437%22%7D%7D"
         self.start_urls = [url]
 
     def start_requests(self):
@@ -23,11 +36,17 @@ class EpicgamesSpider(scrapy.Spider):
 
     def parse(self, response):
         data = json.loads(response.body)
-        elements = data['data']['Catalog']['searchStore']['elements']
+        elements = data["data"]["Catalog"]["searchStore"]["elements"]
 
         # VALIDATE SEARCH
         if len(elements) > 0:
-            element = filter(lambda x: (f'{self.juego} Standard Edition' in ' '.join(x['title'].replace('®', ' ').split())), elements)
+            element = filter(
+                lambda x: (
+                    f"{self.juego} Standard Edition"
+                    in " ".join(x["title"].replace("®", " ").split())
+                ),
+                elements,
+            )
 
             # VALIDATE FILTER
             if len(list(element)) == 0:
@@ -39,40 +58,73 @@ class EpicgamesSpider(scrapy.Spider):
             game = Juego()
 
             # NAME OPERATIONS
-            modiNombre = ' '.join(re.findall(r'[a-zA-Z0-9]+', element['title']))
-            editionName = re.search(r'(Standard Edition)', element['title'])
-            game['nombre'] = str(element['title'])[0:editionName.start()] if editionName else element['title']
-            modiNombre = str(modiNombre)[0:editionName.start()] if editionName else modiNombre
-            modiNombre = str(''.join(map(lambda x: (x if len(x) == 1 else ' ' + x), modiNombre.split()))).strip()
+            modiNombre = " ".join(re.findall(r"[a-zA-Z0-9]+", element["title"]))
+            editionName = re.search(r"(Standard Edition)", element["title"])
+            game["nombre"] = (
+                str(element["title"])[0 : editionName.start()]
+                if editionName
+                else element["title"]
+            )
+            modiNombre = (
+                str(modiNombre)[0 : editionName.start()] if editionName else modiNombre
+            )
+            modiNombre = "".join(
+                x if len(x) == 1 else f" {x}" for x in modiNombre.split()
+            ).strip()
 
-            game['precio'] = element['price']['totalPrice']['fmtPrice']['originalPrice']
-            game['descripcion'] = element['description']
-            game['descuento'] = element['price']['totalPrice']['fmtPrice']['discountPrice']
-            game['link'] = 'https://store.epicgames.com/es-ES/p/' + element['catalogNs']['mappings'][0]['pageSlug']
-            game['img'] = element['keyImages'][2]['url']
+            game["precio"] = element["price"]["totalPrice"]["fmtPrice"][
+                "originalPrice"
+            ]
+            game["descripcion"] = element["description"]
+            game["descuento"] = element["price"]["totalPrice"]["fmtPrice"][
+                "discountPrice"
+            ]
+            game["link"] = (
+                f"https://store.epicgames.com/{self.locale}/p/"
+                + element["catalogNs"]["mappings"][0]["pageSlug"]
+            )
+            game["img"] = element["keyImages"][2]["url"]
 
             # CLEAN PRICES
-            game['precio'] = float(game['precio'].replace('\xa0US$', '').replace(',', '.'))
-            game['descuento'] = float(game['descuento'].replace('\xa0US$', '').replace(',', '.'))
+            try:
+                game["precio"] = float(
+                    game["precio"].replace("\xa0US$", "").replace(",", ".")
+                )
+                game["descuento"] = float(
+                    game["descuento"].replace("\xa0US$", "").replace(",", ".")
+                )
+            except (TypeError, ValueError) as exc:
+                logger.warning("malformed price store=epicgames reason=%s", exc)
+                yield {"egs": None}
+                return
 
             # CHECK DISCOUNT
-            if game['descuento'] == game['precio']:
-                game['descuento'] = None
+            if game["descuento"] == game["precio"]:
+                game["descuento"] = None
 
             # CHECK GAME NAME NUMBERS
-            if re.search(r'[0-9]+', self.juego):
-                numberFound = re.finditer( r'[0-9]+', self.juego)
-                nameConverted = [self.juego[0:m.start()] + roman.toRoman(int(self.juego[m.start():m.end()])) + self.juego[m.end():-1] for m in numberFound][0]
-                
-                if (game['precio'] != 0.0) and (re.search(rf'.*{self.juego.lower()}.*', modiNombre.lower()) or re.search(rf'.*{nameConverted.lower()}.*', modiNombre.lower())):
-                    yield {'egs': dict(game)} 
+            name_matches = bool(
+                re.search(rf".*{self.juego.lower()}.*", modiNombre.lower())
+            )
+            if re.search(r"[0-9]+", self.juego):
+                numberFound = re.finditer(r"[0-9]+", self.juego)
+                nameConverted = [
+                    self.juego[0 : m.start()]
+                    + roman.toRoman(int(self.juego[m.start() : m.end()]))
+                    + self.juego[m.end() : -1]
+                    for m in numberFound
+                ][0]
+                roman_matches = bool(
+                    re.search(rf".*{nameConverted.lower()}.*", modiNombre.lower())
+                )
+                if (game["precio"] != 0.0) and (name_matches or roman_matches):
+                    yield {"egs": dict(game)}
                 else:
-                    yield {'egs': None}
+                    yield {"egs": None}
             else:
-
-                if (game['precio'] != 0.0) and (re.search(rf'.*{self.juego.lower()}.*', modiNombre.lower())):
-                    yield {'egs': dict(game)} 
+                if (game["precio"] != 0.0) and name_matches:
+                    yield {"egs": dict(game)}
                 else:
-                    yield {'egs': None}
+                    yield {"egs": None}
         else:
-            yield {'egs': None}
+            yield {"egs": None}

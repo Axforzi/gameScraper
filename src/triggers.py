@@ -1,20 +1,19 @@
-import logging
-import os
-import sys
+"""Crochet bridge between Flask trigger routes and Scrapy crawlers.
 
-sys.path.insert(1, os.getcwd())
+``TriggerRunner`` replaces the former ``TriggerGame``/``TriggerOffers`` split
+(REQ-ASM-5): one class parameterized by the spider list, built on the Tier 1
+timeout/cancel/error machinery. Completion is derived from the configured
+spider list, never a hardcoded count.
+"""
+
+import logging
+from typing import Any
 
 import crochet
+import scrapy
 from scrapy import signals
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.project import get_project_settings
-
-from steamScrape.spiders.epicgames import EpicgamesSpider
-from steamScrape.spiders.gog import GogSpider
-from steamScrape.spiders.offers_egs import OffersEgsSpider
-from steamScrape.spiders.offers_gog import OffersGogSpider
-from steamScrape.spiders.offers_steam import OffersSteamSpider
-from steamScrape.spiders.steam import SteamSpider
 
 crochet.setup()
 crawl_runner = CrawlerRunner(settings=get_project_settings())
@@ -22,18 +21,27 @@ crawl_runner = CrawlerRunner(settings=get_project_settings())
 logger = logging.getLogger(__name__)
 
 
-class _TriggerBase:
-    """Shared Crochet bridge: schedules one crawler per spider and waits with a timeout.
+class TriggerRunner:
+    """Schedule one crawler per spider and block at most ``timeout`` seconds.
 
-    State machine per run: PENDING → RUNNING → COMPLETED | PARTIAL | TIMEOUT | FAILED.
+    State machine per run: PENDING -> RUNNING -> COMPLETED | PARTIAL | TIMEOUT
+    | FAILED. Returns the merged items dict; raises ``crochet.TimeoutError``
+    when the timeout elapses (after cancelling in-flight crawlers) and
+    re-raises any pre-scheduling exception so the route can map it to an HTTP
+    error. Instances are per-request; ``run()`` resets the per-run state.
     """
 
-    spiders = []
-
-    def __init__(self, timeout: float = 60.0):
+    def __init__(
+        self,
+        spiders: list[type[scrapy.Spider]],
+        term: str | None = None,
+        timeout: float = 60.0,
+    ) -> None:
+        self.spiders = list(spiders)
+        self.term = term
         self.timeout = timeout
-        self.items = {}
-        self._errors = []
+        self.items: dict[str, Any] = {}
+        self._errors: list[tuple[str, str]] = []
         self._state = "PENDING"
 
     @property
@@ -44,17 +52,11 @@ class _TriggerBase:
     def errors(self) -> list:
         return list(self._errors)
 
-    def run(self, term=None) -> dict:
-        """Schedule all spiders and block at most ``timeout`` seconds.
-
-        Returns the merged items dict. Raises ``crochet.TimeoutError`` when the
-        timeout elapses (after cancelling in-flight crawlers) and re-raises any
-        pre-scheduling exception so the route can map it to an HTTP error.
-        """
+    def run(self) -> dict:
         self._state = "RUNNING"
         self._errors = []
         self.items = {}
-        eventual = self._schedule(term)
+        eventual = self._schedule()
         try:
             eventual.wait(timeout=self.timeout)
         except crochet.TimeoutError:
@@ -85,13 +87,13 @@ class _TriggerBase:
         return _stop()
 
     @crochet.run_in_reactor
-    def _schedule(self, term):
+    def _schedule(self):
         for spider_cls in self.spiders:
             crawler = crawl_runner.create_crawler(spider_cls)
             crawler.signals.connect(self._on_item, signal=signals.item_scraped)
             crawler.signals.connect(self._on_spider_error, signal=signals.spider_error)
             crawler.signals.connect(self._on_closed, signal=signals.spider_closed)
-            kwargs = {"juego": term} if term is not None else {}
+            kwargs = {"juego": self.term} if self.term is not None else {}
             deferred = crawl_runner.crawl(crawler, **kwargs)
             deferred.addErrback(self._on_crawl_error, spider_cls.__name__)
         return crawl_runner.join()
@@ -115,21 +117,3 @@ class _TriggerBase:
 
     def _on_closed(self, spider, reason):
         logger.debug("spider_closed spider=%s reason=%s", spider.name, reason)
-
-
-class TriggerGame(_TriggerBase):
-    def __init__(self, timeout: float = 60.0):
-        super().__init__(timeout)
-        self.spiders = [SteamSpider, GogSpider, EpicgamesSpider]
-
-    def parse_data(self, juego):
-        return self.run(juego)
-
-
-class TriggerOffers(_TriggerBase):
-    def __init__(self, timeout: float = 60.0):
-        super().__init__(timeout)
-        self.spiders = [OffersSteamSpider, OffersGogSpider, OffersEgsSpider]
-
-    def parse_data(self):
-        return self.run()

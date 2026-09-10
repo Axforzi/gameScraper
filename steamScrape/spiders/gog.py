@@ -56,6 +56,11 @@ class GogSpider(scrapy.Spider):
     def _match_product(self, product, game):
         """Build the candidate game; return a Request when it matches the term."""
 
+        # Products without a price (null in the GOG catalog API) are skipped
+        # silently instead of crashing the crawl (malformed-product handling).
+        if not product.get("price") or not product.get("title"):
+            return None
+
         # NAME OPERATIONS
         modiNombre = " ".join(re.findall(r"[a-zA-Z0-9]+", product["title"]))
         modiNombre = "".join(

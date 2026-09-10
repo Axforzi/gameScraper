@@ -106,6 +106,7 @@ DOWNLOAD_DELAY = float(os.environ.get("DOWNLOAD_DELAY", "1"))
 #HTTPCACHE_STORAGE = "scrapy.extensions.httpcache.FilesystemCacheStorage"
 
 # Set settings whose default value is deprecated to a future-proof value
-REQUEST_FINGERPRINTER_IMPLEMENTATION = "2.7"
+# REQUEST_FINGERPRINTER_IMPLEMENTATION is the Scrapy 2.12+ default; the
+# setting itself is deprecated and must not be set explicitly.
 #TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"

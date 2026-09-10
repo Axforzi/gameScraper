@@ -15,22 +15,24 @@ Live site: <https://gamescraper.onrender.com>
 
 ## Requirements
 
-- Python 3.10+ (CI validates 3.11, 3.12, and 3.13)
+- Python 3.11+ (CI validates 3.11, 3.12, and 3.13)
+- [uv](https://docs.astral.sh/uv/) — fast Python package manager (lockfile-driven)
 
 ## Setup
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
+# Install uv (if not already installed): https://docs.astral.sh/uv/getting-started/installation/
+#   curl -LsSf https://astral.sh/uv/install.sh | sh   (or: pip install uv)
 
-# Production dependencies
-pip install -r requirements.txt
+# Create the environment and install everything (prod + dev),
+# resolving from the committed uv.lock
+uv sync
+```
 
-# Development dependencies (includes production + pytest, ruff, mypy, ipython)
-pip install -r requirements-dev.txt
+Need a production-only install (no pytest/ruff/mypy/ipython)?
 
-# Editable install so `src` and `steamScrape` resolve as packages
-pip install -e .
+```bash
+uv sync --no-dev
 ```
 
 ## Configuration
@@ -38,6 +40,21 @@ pip install -e .
 Configuration is read from environment variables (see `src/config.py`).
 Defaults match the app's original hardcoded values, so a bare deploy works
 out of the box — except `SECRET_KEY`, which is **required in production**.
+
+For local development or a simple deploy, you can put any of these variables in
+a `.env` file in the project root (gitignored). It is loaded automatically on
+startup; existing environment variables always take precedence over the file.
+
+`.env` example:
+
+```bash
+SECRET_KEY=dev-secret-key-change-me
+DEBUG=1
+HOST=127.0.0.1        # bind address (default 0.0.0.0)
+PORT=8080             # listen port (default 5000)
+```
+
+Or generate a random one: `echo "SECRET_KEY=$(uv run python -c 'import secrets; print(secrets.token_hex(32))')" > .env`
 
 | Variable | Default | Description |
 |---|---|---|
@@ -57,14 +74,14 @@ out of the box — except `SECRET_KEY`, which is **required in production**.
 Example for local development:
 
 ```bash
-export SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
+export SECRET_KEY="$(uv run python -c 'import secrets; print(secrets.token_hex(32))')"
 export DEBUG=1
 ```
 
 ## Run
 
 ```bash
-python main.py
+uv run python main.py
 ```
 
 Serves the app with Waitress on `http://0.0.0.0:5000` (or `HOST`/`PORT`).
@@ -72,9 +89,9 @@ Serves the app with Waitress on `http://0.0.0.0:5000` (or `HOST`/`PORT`).
 ## Test and quality gates
 
 ```bash
-pytest --cov=src --cov=steamScrape   # full suite with coverage report
-ruff check .                          # lint — zero warnings expected
-mypy src steamScrape                  # type check (non-strict)
+uv run pytest --cov=src --cov=steamScrape   # full suite with coverage report
+uv run ruff check .                          # lint — zero warnings expected
+uv run mypy src steamScrape                  # type check (non-strict)
 ```
 
 Tests run against cached HTML/JSON fixtures — no live store access, so the
@@ -83,7 +100,7 @@ suite is deterministic and safe offline.
 ## CI
 
 GitHub Actions (`.github/workflows/ci.yml`) runs lint + tests on every push and
-pull request to `main`, across Python 3.11/3.12/3.13, with pip caching and
+pull request to `main`, across Python 3.11/3.12/3.13, with uv caching and
 concurrency cancellation. No secrets are used in the workflow.
 
 ## Architecture
@@ -110,9 +127,8 @@ Browser ──> Flask (Waitress) ──> TriggerRunner (crochet bridge) ──> 
 ```
 gameScraper/
 ├── main.py                 # entry point: Waitress serve(create_app(), ...)
-├── pyproject.toml          # package metadata + ruff/mypy/pytest config
-├── requirements.txt        # production dependencies
-├── requirements-dev.txt    # production + dev tooling
+├── pyproject.toml          # package metadata + dependencies + ruff/mypy/pytest config
+├── uv.lock                 # resolved dependency graph (committed)
 ├── src/                    # Flask app package
 │   ├── app.py              # create_app() factory + CSRF
 │   ├── config.py           # Settings (env-backed)
@@ -127,6 +143,7 @@ gameScraper/
 
 ## Deployment
 
-On Render (or any WSGI host), the start command is `python main.py`. Set
+On Render (or any WSGI host), the start command is `uv run python main.py` (or
+`python main.py` with a production-only `uv sync --no-dev` install). Set
 `SECRET_KEY` in the platform's environment settings before deploying —
 the app refuses to start without it outside debug mode.

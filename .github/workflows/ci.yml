@@ -20,19 +20,16 @@ jobs:
         python-version: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: pip
-          cache-dependency-path: |
-            requirements.txt
-            requirements-dev.txt
+          enable-cache: true
       - name: Install dependencies
-        run: pip install -r requirements-dev.txt
+        run: uv sync
       - name: Lint with ruff
-        run: ruff check .
+        run: uv run ruff check .
       - name: Type check with mypy
-        run: mypy src steamScrape
+        run: uv run mypy src steamScrape
 
   test:
     name: Test (pytest + coverage)
@@ -43,16 +40,11 @@ jobs:
         python-version: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: pip
-          cache-dependency-path: |
-            requirements.txt
-            requirements-dev.txt
+          enable-cache: true
       - name: Install package and dependencies
-        run: |
-          pip install -e .
-          pip install -r requirements-dev.txt
+        run: uv sync
       - name: Run tests with coverage
-        run: pytest --cov=src --cov=steamScrape
+        run: uv run pytest --cov=src --cov=steamScrape

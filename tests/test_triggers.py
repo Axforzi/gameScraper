@@ -6,6 +6,8 @@ tests that exercise the reactor bridge request the ``crochet_reactor``
 fixture to make that dependency explicit.
 """
 
+from __future__ import annotations
+
 import types
 from collections.abc import Callable
 
@@ -13,6 +15,7 @@ import crochet
 import pytest
 import scrapy
 from scrapy import signals
+from twisted.internet import defer
 
 from src.triggers import TriggerRunner
 
@@ -53,9 +56,19 @@ class FakeSignals:
 
 
 class FakeCrawler:
-    def __init__(self, spider_cls: type[scrapy.Spider]) -> None:
+    def __init__(
+        self, spider_cls: type[scrapy.Spider], runner: FakeCrawlRunner | None = None
+    ) -> None:
         self.spider_cls = spider_cls
         self.signals = FakeSignals()
+        self.runner = runner
+        self.stopped = False
+
+    def stop(self):
+        self.stopped = True
+        if self.runner is not None:
+            self.runner.stopped_crawlers.append(self)
+        return defer.succeed(None)
 
 
 class FakeDeferred:
@@ -71,11 +84,12 @@ class FakeCrawlRunner:
 
     def __init__(self) -> None:
         self.crawlers: list[FakeCrawler] = []
+        self.stopped_crawlers: list[FakeCrawler] = []
         self.stopped = False
         self.last_crawl_kwargs: dict = {}
 
     def create_crawler(self, spider_cls: type[scrapy.Spider]) -> FakeCrawler:
-        crawler = FakeCrawler(spider_cls)
+        crawler = FakeCrawler(spider_cls, runner=self)
         self.crawlers.append(crawler)
         return crawler
 
@@ -161,7 +175,8 @@ def test_run_timeout_aborts_and_cancels(crochet_reactor, monkeypatch) -> None:
     assert runner.state == "TIMEOUT"
     assert eventual.timeout == 0.1  # configured timeout reached the wait
     assert cancel_calls == [runner]
-    assert fake_runner.stopped is True  # no orphan crawler keeps the reactor busy
+    assert fake_runner.stopped is False  # global runner stop no longer used
+    assert fake_runner.stopped_crawlers == []  # no crawlers were scheduled
 
 
 def test_run_failed_on_exception_during_wait(monkeypatch) -> None:
@@ -210,15 +225,27 @@ def test_run_resets_state_between_requests(monkeypatch) -> None:
     assert runner.errors == []
 
 
-def test_cancel_stops_runner(crochet_reactor, monkeypatch) -> None:
+def test_cancel_stops_only_own_crawlers(crochet_reactor, monkeypatch) -> None:
+    """Timeout cancellation must not stop another request's in-flight crawlers."""
     fake_runner = FakeCrawlRunner()
     monkeypatch.setattr("src.triggers.crawl_runner", fake_runner)
 
-    runner = TriggerRunner([FakeSpider])
-    eventual = runner.cancel()
+    runner_a = TriggerRunner([FakeSpider])
+    runner_b = TriggerRunner([FakeSpider])
+
+    # Both runs "schedule" one crawler each; only A's should be stopped.
+    crawler_a = fake_runner.create_crawler(FakeSpider)
+    crawler_b = fake_runner.create_crawler(FakeSpider)
+    runner_a._crawlers.add(crawler_a)
+    runner_b._crawlers.add(crawler_b)
+
+    eventual = runner_a.cancel()
     eventual.wait(timeout=5)
 
-    assert fake_runner.stopped is True
+    assert crawler_a in fake_runner.stopped_crawlers
+    assert crawler_b not in fake_runner.stopped_crawlers
+    assert crawler_b.stopped is False
+    assert fake_runner.stopped is False  # shared runner stop never invoked
 
 
 def test_schedule_wires_per_crawler_signals(crochet_reactor, monkeypatch) -> None:
@@ -233,6 +260,7 @@ def test_schedule_wires_per_crawler_signals(crochet_reactor, monkeypatch) -> Non
     connected_signals = {signal for _, signal in crawler.signals.connected}
     assert connected_signals == {signals.item_scraped, signals.spider_error, signals.spider_closed}
     assert fake_runner.last_crawl_kwargs == {"juego": "doom"}
+    assert set(runner._crawlers) == {crawler}  # per-run tracking for cancel
 
 
 def test_schedule_omits_term_kwarg_when_none(crochet_reactor, monkeypatch) -> None:

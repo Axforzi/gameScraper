@@ -26,6 +26,7 @@ def test_defaults_match_current_app() -> None:
     assert settings.debug is False
     assert settings.spider_timeout == 60.0
     assert settings.download_delay == 1.0
+    assert settings.waitress_threads == 16
 
 
 def test_from_env_reads_all_overrides() -> None:
@@ -42,6 +43,7 @@ def test_from_env_reads_all_overrides() -> None:
         "DEBUG": "true",
         "SPIDER_TIMEOUT": "5.5",
         "DOWNLOAD_DELAY": "0.5",
+        "WAITRESS_THREADS": "24",
     }
     settings = Settings.from_env(env)
 
@@ -57,6 +59,7 @@ def test_from_env_reads_all_overrides() -> None:
     assert settings.debug is True
     assert settings.spider_timeout == 5.5
     assert settings.download_delay == 0.5
+    assert settings.waitress_threads == 24
 
 
 def test_from_env_falls_back_to_defaults_on_empty_env() -> None:
@@ -64,6 +67,7 @@ def test_from_env_falls_back_to_defaults_on_empty_env() -> None:
     assert settings.country == "VE"
     assert settings.port == 5000
     assert settings.spider_timeout == 60.0
+    assert settings.waitress_threads == 16
     assert settings.secret_key is None
 
 

@@ -227,3 +227,17 @@ def test_post_ofertas_total_failure_maps_502(fake_trigger, client) -> None:
     payload = response.get_json()
     assert payload["error"] == FAILED_OFERTAS_MSG
     assert payload["errors"] == [["OffersSteamSpider", "boom"]]
+
+
+def test_post_ofertas_all_stores_empty_without_errors_maps_502(
+    fake_trigger, client
+) -> None:
+    """REQ-ASM-3 scenario 1: empty 200 {} must never reach the client."""
+    FakeTriggerRunner.items = {"steam": [], "gog": [], "egs": []}
+    token = _csrf_token(client)
+    response = client.post("/ofertas", headers={"X-CSRFToken": token})
+
+    assert response.status_code == 502
+    payload = response.get_json()
+    assert payload["error"] == FAILED_OFERTAS_MSG
+    assert payload["errors"] == []

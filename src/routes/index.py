@@ -99,6 +99,17 @@ def _total_failure(result, scrape):
     return bool(scrape.errors) and not any(result.values())
 
 
+def _no_store_items(result) -> bool:
+    """True when no store yielded any item (REQ-ASM-3 scenario 1).
+
+    An all-empty offers crawl (zero items and no per-store errors) must not
+    answer HTTP 200 with empty data — the client would render nothing. When
+    errors exist the historical mapping still applies (502 with no items,
+    partial 200 when at least one store produced items).
+    """
+    return not any(result.values())
+
+
 @index.route('/')
 def get_index():
     return render_template('index.html')
@@ -148,7 +159,7 @@ def get_ofertas():
         logger.exception("ofertas trigger failed")
         return jsonify({'error': FAILED_OFERTAS_MSG}), 502
 
-    if _total_failure(result, scrape):
+    if _no_store_items(result):
         errors = [[name, _sanitize_text(reason)] for name, reason in scrape.errors]
         return jsonify({'error': FAILED_OFERTAS_MSG, 'errors': errors}), 502
     return jsonify(_sanitize_payload(_payload_with_errors(result, scrape)))

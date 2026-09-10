@@ -14,11 +14,16 @@ import scrapy
 from scrapy import signals
 from scrapy.crawler import CrawlerRunner
 from scrapy.utils.project import get_project_settings
+from twisted.internet import defer
 
 crochet.setup()
 crawl_runner = CrawlerRunner(settings=get_project_settings())
 
 logger = logging.getLogger(__name__)
+
+# Bounded budget to await the per-run stop before replying 504: the crawl has
+# already blown the spider timeout, so a stuck stop must not tie the thread.
+_CANCEL_WAIT_SECONDS = 5.0
 
 
 class TriggerRunner:
@@ -42,6 +47,7 @@ class TriggerRunner:
         self.timeout = timeout
         self.items: dict[str, Any] = {}
         self._errors: list[tuple[str, str]] = []
+        self._crawlers: set[Any] = set()
         self._state = "PENDING"
 
     @property
@@ -56,12 +62,13 @@ class TriggerRunner:
         self._state = "RUNNING"
         self._errors = []
         self.items = {}
+        self._crawlers = set()
         eventual = self._schedule()
         try:
             eventual.wait(timeout=self.timeout)
         except crochet.TimeoutError:
-            self.cancel()
             self._state = "TIMEOUT"
+            self._stop_own_crawlers()
             names = ", ".join(spider.__name__ for spider in self.spiders)
             logger.warning("spider_timeout spider=%s timeout=%s", names, self.timeout)
             raise
@@ -72,17 +79,31 @@ class TriggerRunner:
         self._state = "PARTIAL" if self._errors else "COMPLETED"
         return self.items
 
-    def cancel(self):
-        """Stop every tracked crawler so no orphan keeps the reactor busy.
+    def _stop_own_crawlers(self) -> None:
+        """Await the stop of THIS run's crawlers so no orphan keeps the reactor busy.
 
-        Runs asynchronously in the reactor thread; the returned
-        ``EventualResult`` can be awaited when callers need to know the stop
-        completed.
+        The stop is awaited with a bounded budget: the spider timeout already
+        elapsed, so a stuck stop must not delay the 504 response further.
+        """
+        try:
+            self.cancel().wait(timeout=_CANCEL_WAIT_SECONDS)
+        except Exception as exc:
+            logger.warning("cancel did not complete cleanly: %s", exc)
+
+    def cancel(self):
+        """Stop and await only the crawlers created by this run.
+
+        Runs asynchronously in the reactor thread and returns an
+        ``EventualResult`` whose ``wait()`` blocks until every tracked
+        crawler's ``stop()`` deferred has fired.
         """
 
         @crochet.run_in_reactor
-        def _stop() -> None:
-            crawl_runner.stop()
+        def _stop() -> Any:
+            own_crawlers = tuple(self._crawlers)
+            if not own_crawlers:
+                return None
+            return defer.DeferredList([crawler.stop() for crawler in own_crawlers])
 
         return _stop()
 
@@ -90,6 +111,7 @@ class TriggerRunner:
     def _schedule(self):
         for spider_cls in self.spiders:
             crawler = crawl_runner.create_crawler(spider_cls)
+            self._crawlers.add(crawler)
             crawler.signals.connect(self._on_item, signal=signals.item_scraped)
             crawler.signals.connect(self._on_spider_error, signal=signals.spider_error)
             crawler.signals.connect(self._on_closed, signal=signals.spider_closed)

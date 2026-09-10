@@ -8,6 +8,8 @@ import logging
 
 import scrapy
 
+from src.config import Settings
+
 from ..items import Juego
 
 logger = logging.getLogger(__name__)
@@ -23,9 +25,27 @@ def _parse_price(value: str | None) -> float:
 
 class OffersSteamSpider(scrapy.Spider):
     name = "offers_steam"
-    start_urls = [
-        "https://store.steampowered.com/search/?category1=998&os=win&specials=1&ndl=1"
-    ]
+
+    # Same age-gate bypass as SteamSpider: without these cookies Steam serves
+    # a verification page instead of the search results.
+    cookiesConfig = {"birthtime": "1008392401", "lastagecheckage": "15-December-2001"}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        cfg = Settings.from_env(require_secret=False)
+        self.headersConfig = {"Accept-Language": f"{cfg.locale},es;q=0.9"}
+        self.start_urls = [
+            "https://store.steampowered.com/search/?category1=998&os=win&specials=1&ndl=1"
+        ]
+
+    def start_requests(self):
+        for url in self.start_urls:
+            yield scrapy.Request(
+                url,
+                cookies=self.cookiesConfig,
+                headers=self.headersConfig,
+                callback=self.parse,
+            )
 
     def parse(self, response):
         content = response.xpath("//div[@class='search_results']//a[@data-gpnav='item']")[0:10]
@@ -55,6 +75,8 @@ class OffersSteamSpider(scrapy.Spider):
                 callback=self.parse_offer,
                 meta={"game": dict(game)},
                 dont_filter=True,
+                cookies=self.cookiesConfig,
+                headers=self.headersConfig,
             )
 
     def parse_offer(self, response):

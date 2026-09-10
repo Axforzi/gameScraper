@@ -110,6 +110,17 @@ class TestGogSpider:
         assert spider.parse(response) == {"gog": None}
         assert "malformed product" in caplog.text
 
+    def test_parse_skips_null_price_candidate_without_crash(self) -> None:
+        spider = GogSpider(juego="null price game")
+        response = make_json(GOG_URL, "json/gog_catalog.json")
+        assert spider.parse(response) == {"gog": None}
+
+    def test_parse_skips_null_price_product_silently(self, caplog) -> None:
+        spider = GogSpider(juego="null price game")
+        response = make_json(GOG_URL, "json/gog_null_price.json")
+        assert spider.parse(response) == {"gog": None}
+        assert "malformed product" not in caplog.text
+
     def test_get_description_joins_snippets(self) -> None:
         spider = GogSpider(juego="witcher")
         response = make_html(
@@ -153,6 +164,16 @@ class TestEpicgamesSpider:
 
 
 class TestOffersSteamSpider:
+    def test_start_requests_sends_age_gate_bypass(self) -> None:
+        spider = OffersSteamSpider()
+        (request,) = list(spider.start_requests())
+
+        assert request.callback == spider.parse
+        assert request.cookies == spider.cookiesConfig
+        accept_language = request.headers.get("Accept-Language")
+        assert accept_language is not None
+        assert "es-ES" in accept_language.decode()
+
     def test_parse_skips_malformed_offer_and_follows_valid_ones(self, caplog) -> None:
         spider = OffersSteamSpider()
         response = make_html(
@@ -208,6 +229,11 @@ class TestOffersGogSpider:
 
 
 class TestOffersEgsSpider:
+    def test_start_url_has_no_stale_effective_date_filter(self) -> None:
+        spider = OffersEgsSpider()
+        (url,) = spider.start_urls
+        assert "effectiveDate" not in url
+
     def test_parse_skips_malformed_element(self, caplog) -> None:
         spider = OffersEgsSpider()
         response = make_json(EGS_URL, "json/egs_graphql.json")

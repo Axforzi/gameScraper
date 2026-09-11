@@ -1,62 +1,59 @@
 {% extends 'base.html' %}
 
-{% block head%} 
-{{ super() }}
-<link rel="stylesheet" href="{{url_for('static', filename='css/ofertas.css')}}">
-<link rel="stylesheet" href="{{url_for('static', filename='css/responsive.css')}}">
-{% endblock %}
-
 {% block title %} Ofertas {% endblock %}
 
-{% block main %}
-<h2>Ofertas de steam</h2>
-<div class="ofertas-steam">
-    <div class="loading w-100 text-center">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
+{% block content %}
+<h1>Ofertas de hoy</h1>
+<div class="offers-shell">
+    <section class="store-section" data-store="steam">
+        <div class="store-head">
+            <span class="store-badge badge-steam">Steam</span>
+            <h2>Ofertas de Steam</h2>
         </div>
-    </div>
-</div>
-<a class="btn btn-success mb-2 d-none btn-steam" target="_blank" href="https://store.steampowered.com/search/?category1=998&os=win&specials=1&ndl=1"> Ver más en steam... </a>
+        <div class="offer-grid"></div>
+        <a class="view-more" href="https://store.steampowered.com/search/?category1=998&amp;os=win&amp;specials=1&amp;ndl=1" target="_blank" rel="noopener">Ver más en Steam</a>
+    </section>
 
-<h2>Ofertas de Epic Games</h2>
-<div class="ofertas-egs">
-    <div class="loading w-100 text-center">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
+    <section class="store-section" data-store="egs">
+        <div class="store-head">
+            <span class="store-badge badge-egs">Epic Games</span>
+            <h2>Ofertas de Epic Games</h2>
         </div>
-    </div>
-</div>
-<a class="btn btn-success mb-2 d-none btn-egs" target="_blank" href="https://store.epicgames.com/es-ES/browse?sortBy=releaseDate&sortDir=DESC&tag=Superoferta%20de%20Epic&category=Game&count=40&start=0"> Ver más en Epic Games... </a>
+        <div class="offer-grid"></div>
+        <a class="view-more" href="https://store.epicgames.com/es-ES/browse?sortBy=releaseDate&amp;sortDir=DESC&amp;tag=Superoferta%20de%20Epic&amp;category=Game&amp;count=40&amp;start=0" target="_blank" rel="noopener">Ver más en Epic Games</a>
+    </section>
 
-<h2>Ofertas de GOG</h2>
-<div class="ofertas-gog">
-    <div class="loading w-100 text-center">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
+    <section class="store-section" data-store="gog">
+        <div class="store-head">
+            <span class="store-badge badge-gog">GOG</span>
+            <h2>Ofertas de GOG</h2>
         </div>
-    </div>
+        <div class="offer-grid"></div>
+        <a class="view-more" href="https://www.gog.com/en/games?discounted=true" target="_blank" rel="noopener">Ver más en GOG</a>
+    </section>
 </div>
-<a class="btn btn-success mb-2 d-none btn-gog" target="_blank" href="https://www.gog.com/en/games?discounted=true"> Ver más en gog... </a>
 
-<template class="oferta-template">
-    <div class="oferta">
-        <div class="img">
-            <img src="https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1551360/header.jpg?t=1717876415" alt="steam-img">
-        </div>
-        <div class="content">
-            <div class="info">
-                <h3 class="nombre"> Forza Horizon 5 <span class="descuento"> -50% </span> </h3>
-                <div class="container-price">
-                    <p><span class="precio"> 15$ </span></p>
-                    <p><span class="final"> 7.5$ </span></p>
-                </div>
+<template id="offer-card-template">
+    <article class="offer-card">
+        <img class="cover-img" src="{{ url_for('static', filename='img/placeholder.svg') }}" data-placeholder="{{ url_for('static', filename='img/placeholder.svg') }}" alt="">
+        <div class="offer-card-body">
+            <h3 class="card-title"></h3>
+            <div class="price-card">
+                <span class="price-original"></span>
+                <span class="price-chip"></span>
+                <span class="price-final"></span>
             </div>
-            <a href="" target="_blank" class="btn btn-success link"> <span class="material-symbols-outlined">arrow_forward</span></a>
+            <a class="card-link" href="#" target="_blank" rel="noopener">
+                <span>Ver oferta</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="currentColor" d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                </svg>
+            </a>
         </div>
-    </div>
+    </article>
 </template>
 
-<script src="{{url_for('static', filename='js/ofertas.js')}}"></script>
-
+<noscript>
+    <p>Habilita JavaScript para cargar las ofertas de hoy automáticamente.</p>
+</noscript>
 {% endblock %}

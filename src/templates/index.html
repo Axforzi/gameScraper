@@ -2,223 +2,70 @@
 
 {% block title %} Comparación de precios {% endblock %}
 
-{% block main %}
-<h1 class="mb-3 text-light">Obtener precios de un juego</h1>
-<form onsubmit="getGame(event)" method="post" class="form-game">
-    <span>
-        <input type="text" name="game-link" id="game" class="form-control shadow-none" placeholder="Nombre del juego"
-            autocomplete="off">
-    </span>
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button class="btn material-symbols-outlined search-btn"> search </button>
-</form>
-
-<div class="modal modal-xl fade" id="modalJuegos" tabindex="-1" aria-labelledby="modalJuegosLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h1 class="modal-title w-100 text-center" id="modalJuegosTitle">Juego</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="loading w-100 text-center">
-                    <div class="spinner-border" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-success w-100" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
+{% block content %}
+<div class="search-area">
+    <h1>Obtener precios de un juego</h1>
+    <form id="game-form" class="search-form" action="/juego" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label class="sr-only" for="game">Nombre del juego</label>
+        <input type="text" name="game-link" id="game" placeholder="Nombre del juego" autocomplete="off" required>
+        <button type="submit" id="search-submit" aria-label="Buscar">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/>
+            </svg>
+            <span class="sr-only">Buscar</span>
+        </button>
+    </form>
 </div>
 
-<template id="juegoTemplate">
-    <div class="container-juego">
-        <img src="" alt="cover">
-        <div class="container-descripcion">
-            <h2 class="titulo"> titulo </h2>
-            <p class="descripcion"> descripcion </p>
-        </div>
+<section id="results-panel" class="results-panel" role="dialog" aria-modal="true" aria-labelledby="results-title" aria-hidden="true">
+    <div class="panel-header">
+        <h2 id="results-title">Resultados de la búsqueda</h2>
+        <button type="button" id="panel-close" aria-label="Cerrar panel">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+        </button>
     </div>
-
-    <h3 class="text-center mt-4 mb-2">Plataformas</h3>
-    <div class="plataformas">
-        <div class="steam">
-            <div class="info">
-                <img src="{{url_for('static', filename='img/steam.png')}}" alt="">
-                <p> Precio: <span class="precio"> 15$ </span></p>
-                <p> Descuento: <span class="descuento"> 50% </span></p>
-                <p> Precio final: <span class="final"> 7.5$ </span></p>
-            </div>
-            <a href="#" target="_blank" class="btn btn-dark">Ir</a>
-        </div>
-
-        <div class="gog">
-            <div class="info">
-                <img src="{{url_for('static', filename='img/gog.png')}}" alt="">
-                <p> Precio: <span class="precio"> 15$ </span></p>
-                <p> Descuento: <span class="descuento"> 50% </span></p>
-                <p> Precio final: <span class="final"> 7.5$ </span></p>
-            </div>
-
-            <a href="#" target="_blank" class="btn btn-dark">Ir</a>
-        </div>
-
-        <div class="egs">
-            <div class="info">
-                <img src="{{url_for('static', filename='img/egs.png')}}" alt="">
-                <p> Precio: <span class="precio"> 15$ </span></p>
-                <p> Descuento: <span class="descuento"> 50% </span></p>
-                <p> Precio final: <span class="final"> 7.5$ </span></p>
-            </div>
-            <a href="#" target="_blank" class="btn btn-dark">Ir</a>
-        </div>
+    <div class="panel-body">
+        <section class="store-section" data-store="steam">
+            <span class="store-badge badge-steam">Steam</span>
+            <div class="store-view"></div>
+        </section>
+        <section class="store-section" data-store="gog">
+            <span class="store-badge badge-gog">GOG</span>
+            <div class="store-view"></div>
+        </section>
+        <section class="store-section" data-store="egs">
+            <span class="store-badge badge-egs">Epic Games</span>
+            <div class="store-view"></div>
+        </section>
     </div>
+</section>
+<div id="panel-backdrop" class="panel-backdrop"></div>
+
+<template id="game-panel-template">
+    <article class="store-card">
+        <img class="cover-img" src="{{ url_for('static', filename='img/placeholder.svg') }}" data-placeholder="{{ url_for('static', filename='img/placeholder.svg') }}" alt="">
+        <div class="store-card-body">
+            <h3 class="card-title"></h3>
+            <p class="card-desc"></p>
+            <div class="price-card">
+                <span class="price-original"></span>
+                <span class="price-chip"></span>
+                <span class="price-final"></span>
+            </div>
+            <a class="card-link" href="#" target="_blank" rel="noopener">
+                <span>Ir a la tienda</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="currentColor" d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                </svg>
+            </a>
+        </div>
+    </article>
 </template>
 
-{% endblock %}
-
-{% block scripts %}
-<script>
-    // EFFECT FOR INPUT TEXT
-    const input = document.querySelector('.form-game #game');
-    input.addEventListener('focusin', (event) => {
-        document.documentElement.style.setProperty('--input-width', '100%');
-    });
-
-    input.addEventListener('focusout', (event) => {
-        document.documentElement.style.setProperty('--input-width', '0%');
-    });
-
-    // SUBMIT FORM
-    const templateJuego = document.querySelector('#juegoTemplate').content;
-    const modalContent = document.querySelector('#modalJuegos .modal-body');
-
-    addEventListener('hidden.bs.modal', () => {
-        modalContent.innerHTML = "<div class='loading w-100 text-center'><div class='spinner-border' role='status'><span class='visually-hidden'>Loading...</span></div></div>";
-    })
-
-    const getGame = async (evt) => {
-        // ACTIVATE MODAL
-        const modal = new bootstrap.Modal(document.querySelector('#modalJuegos'));
-        modal.show()
-
-        // SEARCH DATA
-        evt.preventDefault()
-        const form = new FormData(document.querySelector('.form-game'));
-        const res = await fetch('/juego', {
-            method: 'POST',
-            headers: { 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content },
-            body: form,
-        });
-        const data = await res.json()
-
-        if (!res.ok) {
-            modalContent.textContent = '';
-            const errorTitle = document.createElement('h1');
-            errorTitle.setAttribute('align', 'center');
-            errorTitle.textContent = data.error || 'No se encontraron datos!';
-            modalContent.appendChild(errorTitle);
-            return;
-        }
-
-        // INFO STEAM
-        console.log(data);
-        const clone = templateJuego.cloneNode(true);
-        if (data.steam !== null) {
-            clone.querySelector('.titulo').textContent = data.steam.nombre || '';
-            clone.querySelector('.descripcion').textContent = data.steam.descripcion || '';
-            clone.querySelector('img').src = data.steam.img;
-            clone.querySelector('img').style.minHeight = '200px';
-
-            // PRECIOS
-            clone.querySelector('.steam .precio').innerText = `${data.steam.precio}$`;
-            if (data.steam.descuento !== null){
-                const porcentaje = 100 - ((data.steam.descuento * 100) / data.steam.precio);
-                clone.querySelector('.steam .descuento').innerText = `${porcentaje.toFixed(2)}%`
-            } else{
-                clone.querySelector('.steam .descuento').innerText = 'Ninguno';
-                clone.querySelector('.steam .final').innerText = `${data.steam.precio}$`;
-            }
-            
-            clone.querySelector('.steam a').href = data.steam.link
-        } else {
-            clone.querySelector('.steam').remove();
-        }
-
-        const titulo = clone.querySelector('.titulo').innerText.trim()
-        // INFO EGS
-        if (data.egs !== null) {
-            clone.querySelector('.titulo').textContent = data.egs.nombre || '';
-
-            // VERIFICAR DESCRIPCION
-            if (clone.querySelector('.descripcion').innerText.trim() === 'descripcion') {
-                clone.querySelector('.descripcion').textContent = data.egs.descripcion || '';
-            }
-
-            // VERIFICAR COVER
-            if (clone.querySelector('img').src === ''){
-                clone.querySelector('img').src = data.egs.img;
-                clone.querySelector('img').style.minHeight = '300px';
-            }
-
-            // PRECIOS
-            clone.querySelector('.egs .precio').innerText = `${data.egs.precio}$`;
-            if (data.egs.descuento !== null){
-                const porcentaje = 100 - ((data.egs.descuento * 100) / data.egs.precio);
-                clone.querySelector('.egs .descuento').innerText = `${porcentaje.toFixed(2)}%`
-                clone.querySelector('.egs .final').innerText = `${data.egs.descuento}$`;
-            } else{
-                clone.querySelector('.egs .descuento').innerText = 'Ninguno';
-                clone.querySelector('.egs .final').innerText = `${data.egs.precio}$`;
-            }
-
-            clone.querySelector('.egs a').href = data.egs.link
-        } else {
-            clone.querySelector('.egs').remove()
-        }
-
-        // INFO GOG
-        if (data.gog !== null){
-            clone.querySelector('.titulo').textContent = data.gog.nombre || '';
-
-            // VERIFICAR DESCRIPCION
-            if (clone.querySelector('.descripcion').innerText.trim() === 'descripcion') {
-                clone.querySelector('.descripcion').textContent = data.gog.descripcion || '';
-            }
-
-            // VERIFICAR COVER
-            if (clone.querySelector('img').src === ''){
-                clone.querySelector('img').src = data.gog.img;
-                clone.querySelector('img').style.minHeight = '500px';
-            }
-
-            // PRECIOS
-            clone.querySelector('.gog .precio').innerText = `${data.gog.precio}$`;
-            if (data.gog.descuento !== null){
-                const porcentaje = 100 - ((data.gog.descuento * 100) / data.gog.precio);
-                clone.querySelector('.gog .descuento').innerText = `${porcentaje.toFixed(2)}%`
-                clone.querySelector('.gog .final').innerText = `${data.gog.descuento}$`;
-            } else{
-                clone.querySelector('.gog .descuento').innerText = 'Ninguno';
-                clone.querySelector('.gog .final').innerText = `${data.gog.precio}$`;
-            }
-
-            clone.querySelector('.gog a').href = data.gog.link   
-        } else {
-            clone.querySelector('.gog').remove()
-        }
-
-        // EN CASO DE NO HABER DATOS
-        if ((data.steam === null) && (data.gog === null) && (data.egs === null)){
-            modalContent.innerHTML = '';
-            modalContent.innerHTML = "<h1 align='center'> No se encontraron datos! </h1>";
-        } else{
-            modalContent.innerHTML = '';
-            modalContent.appendChild(clone);
-        }
-    }
-</script>
+<noscript>
+    <p>Habilita JavaScript para comparar precios automáticamente. Al enviar el formulario se mostrará la respuesta del servidor.</p>
+</noscript>
 {% endblock %}

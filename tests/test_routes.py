@@ -241,3 +241,37 @@ def test_post_ofertas_all_stores_empty_without_errors_maps_502(
     payload = response.get_json()
     assert payload["error"] == FAILED_OFERTAS_MSG
     assert payload["errors"] == []
+
+
+def test_post_juego_success_includes_currency(fake_trigger, client) -> None:
+    """REQ-UI-7: 200 /juego envelope carries the configured currency."""
+    FakeTriggerRunner.items = {"steam": {"nombre": "Half-Life"}, "gog": None, "egs": None}
+    token = _csrf_token(client)
+    response = _post_juego(client, "half-life", token)
+
+    assert response.status_code == 200
+    assert response.get_json()["currency"] == "USD"
+
+
+def test_post_ofertas_success_includes_currency(fake_trigger, client) -> None:
+    """REQ-UI-7: 200 /ofertas envelope carries the configured currency."""
+    FakeTriggerRunner.items = {"steam": [{"nombre": "Of1"}], "gog": [], "egs": []}
+    token = _csrf_token(client)
+    response = client.post("/ofertas", headers={"X-CSRFToken": token})
+
+    assert response.status_code == 200
+    assert response.get_json()["currency"] == "USD"
+
+
+def test_error_responses_omit_currency(fake_trigger, client) -> None:
+    """REQ-UI-7: non-200 envelopes never include the currency key."""
+    token = _csrf_token(client)
+
+    bad_request = client.post("/juego", data={}, headers={"X-CSRFToken": token})
+    assert bad_request.status_code == 400
+    assert "currency" not in bad_request.get_json()
+
+    FakeTriggerRunner.raise_exc = RuntimeError
+    bad_gateway = _post_juego(client, "half-life", token)
+    assert bad_gateway.status_code == 502
+    assert "currency" not in bad_gateway.get_json()

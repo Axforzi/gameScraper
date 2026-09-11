@@ -24,6 +24,7 @@ def create_app(settings: Settings | None = None) -> Flask:
             "Set SECRET_KEY in the environment before deploying."
         )
     app.config["SPIDER_TIMEOUT"] = settings.spider_timeout
+    app.config["CURRENCY"] = settings.currency
     app.config["DEBUG"] = settings.debug
 
     # CSRF protection for all POST endpoints

@@ -54,8 +54,9 @@ def _validate_game_link(value):
 
 
 def _payload_with_errors(result, scrape):
-    """Attach per-store errors to a 200 partial response (REQ-ASM-3)."""
+    """Attach per-store errors and currency to a 200 partial response (REQ-ASM-3, REQ-UI-7)."""
     payload = dict(result)
+    payload['currency'] = current_app.config["CURRENCY"]
     if scrape.errors:
         payload['errors'] = [
             [name, _sanitize_text(reason)] for name, reason in scrape.errors

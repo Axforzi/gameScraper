@@ -9,11 +9,16 @@ body {
 }
 
 main {
+    display: flex;
+    flex-direction: column;
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
     padding: var(--space-lg) var(--space-md);
     flex: 1;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 50px;
 }
 
 .search-area {
@@ -23,6 +28,7 @@ main {
 
 .offers-shell {
     display: grid;
+    padding-top: 15px;
     gap: var(--space-lg);
 }
 
@@ -113,19 +119,18 @@ main {
 
 /* ---------- Search form ---------- */
 .search-form {
-    display: flex;
-    gap: var(--space-sm);
+    position: relative;
     width: 100%;
     max-width: 560px;
     margin: var(--space-md) auto 0;
 }
 
 .search-form input {
-    flex: 1;
-    min-width: 0;
-    padding: 12px var(--space-md);
+    display: block;
+    width: 100%;
+    padding: 12px 60px 12px var(--space-md);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
+    border-radius: 30px;
     background: var(--color-surface-1);
     color: var(--color-text);
     font: inherit;
@@ -136,12 +141,15 @@ main {
 }
 
 #search-submit {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    transform: translateY(-50%);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
-    flex: none;
+    width: 44px;
+    height: 44px;
     border: none;
     border-radius: 50%;
     background: var(--color-accent);
@@ -162,6 +170,7 @@ main {
 .store-section {
     display: flex;
     flex-direction: column;
+    min-height: 190px;
     gap: var(--space-sm);
     min-width: 0;
     padding: var(--space-md);
@@ -213,6 +222,7 @@ main {
     gap: var(--space-md);
     grid-template-columns: 1fr;
     min-width: 0;
+    position: relative;
 }
 
 /* ---------- Cards ---------- */
@@ -328,6 +338,10 @@ main {
 /* ---------- Skeleton / states ---------- */
 .skeleton {
     height: 120px;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
     border-radius: var(--radius-md);
     background: linear-gradient(
         90deg,

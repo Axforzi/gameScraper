@@ -34,7 +34,7 @@ class OffersEgsSpider(scrapy.Spider):
         elements = data["data"]["Catalog"]["searchStore"]["elements"]
 
         games = []
-        for element in elements[:10]:
+        for element in elements[:9]:
             game = Juego()
             try:
                 game["nombre"] = element["title"]

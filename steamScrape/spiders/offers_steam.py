@@ -48,7 +48,7 @@ class OffersSteamSpider(scrapy.Spider):
             )
 
     def parse(self, response):
-        content = response.xpath("//div[@class='search_results']//a[@data-gpnav='item']")[0:10]
+        content = response.xpath("//div[@class='search_results']//a[@data-gpnav='item']")[0:9]
 
         for element in content:
             game = Juego()

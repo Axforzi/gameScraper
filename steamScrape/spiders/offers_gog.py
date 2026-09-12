@@ -34,7 +34,7 @@ class OffersGogSpider(scrapy.Spider):
         data = json.loads(response.body)["products"]
 
         games = []
-        for product in data[:10]:
+        for product in data[:9]:
             game = Juego()
             try:
                 game["nombre"] = product["title"]

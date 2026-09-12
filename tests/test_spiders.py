@@ -221,7 +221,7 @@ class TestOffersGogSpider:
         (result,) = list(spider.parse(response))
 
         games = result["gog"]
-        assert len(games) == 9  # "Free"/"Free" product skipped
+        assert len(games) == 8  # top-9 slice, "Free"/"Free" product skipped
         assert games[0]["nombre"] == "The Witcher 3: Wild Hunt"
         assert games[0]["precio"] == 39.99
         assert games[0]["descuento"] == 19.99
@@ -240,7 +240,7 @@ class TestOffersEgsSpider:
         (result,) = list(spider.parse(response))
 
         games = result["egs"]
-        assert len(games) == 9  # "Gratis" element skipped
+        assert len(games) == 8  # top-9 slice, "Gratis" element skipped
         assert games[0]["nombre"] == "Final Fantasy IV"
         assert games[0]["precio"] == 59.99
         assert games[0]["descuento"] == 29.99

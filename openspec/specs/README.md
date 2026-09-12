@@ -11,8 +11,9 @@ Source-of-truth specs promoted from archived changes. Once a change is archived,
 | config-management | `config-management/spec.md` | `propose-professional-improvements` (Tier 2) |
 | package-layout | `package-layout/spec.md` | `propose-professional-improvements` (Tiers 2, 4) |
 | testing-baseline | `testing-baseline/spec.md` | `propose-professional-improvements` (Tiers 3, 4) |
+| web-ui | `web-ui/spec.md` | `redesign-web-ui` (REQ-UI-1..10) |
 
-All five capabilities were introduced as NEW specs by the `propose-professional-improvements` change (the project previously had zero specs in `openspec/specs/`). No MODIFIED/REMOVED/RENAMED requirements exist for this change; each promoted spec is a full capability spec.
+Six capabilities are promoted as NEW specs: five by the `propose-professional-improvements` change (the project previously had zero specs in `openspec/specs/`) and `web-ui` by the `redesign-web-ui` change. No MODIFIED/REMOVED/RENAMED requirements exist for these changes; each promoted spec is a full capability spec.
 
 ## Wording Reconciliation Applied at Archive
 

@@ -2,8 +2,9 @@ import logging
 import re
 import urllib.parse
 
+from html.parser import HTMLParser
+
 import crochet
-import nh3
 from flask import Blueprint, current_app, jsonify, render_template, request
 
 from src.triggers import TriggerRunner
@@ -64,11 +65,24 @@ def _payload_with_errors(result, scrape):
     return payload
 
 
+class _TagStripper(HTMLParser):
+    """Strip all HTML tags, returning only text content (REQ-SEC-1)."""
+
+    def __init__(self):
+        super().__init__()
+        self._parts: list[str] = []
+
+    def handle_data(self, data):
+        self._parts.append(data)
+
+
 def _sanitize_text(value):
     """Reduce a spider-provided text field to plain text (REQ-SEC-1)."""
     if not isinstance(value, str):
         return value
-    return nh3.clean(value, tags=set())
+    s = _TagStripper()
+    s.feed(value)
+    return "".join(s._parts)
 
 
 def _sanitize_uri(value):

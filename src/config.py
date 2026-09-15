@@ -28,6 +28,8 @@ class Settings:
     spider_timeout: float = 60.0
     download_delay: float = 1.0
     waitress_threads: int = 16
+    offers_cache_path: str = "data/offers.json"
+    offers_cache_interval: float = 86400.0
 
     @classmethod
     def from_env(
@@ -64,4 +66,6 @@ class Settings:
             spider_timeout=float(env.get("SPIDER_TIMEOUT", "60")),
             download_delay=float(env.get("DOWNLOAD_DELAY", "1")),
             waitress_threads=int(env.get("WAITRESS_THREADS", "16")),
+            offers_cache_path=env.get("OFFERS_CACHE_PATH", "data/offers.json"),
+            offers_cache_interval=float(env.get("OFFERS_CACHE_INTERVAL", "86400")),
         )

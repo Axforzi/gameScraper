@@ -26,6 +26,7 @@ def create_app(settings: Settings | None = None) -> Flask:
     app.config["SPIDER_TIMEOUT"] = settings.spider_timeout
     app.config["CURRENCY"] = settings.currency
     app.config["DEBUG"] = settings.debug
+    app.config["OFFERS_CACHE"] = None  # set by main.py after app creation
 
     # CSRF protection for all POST endpoints
     CSRFProtect(app)

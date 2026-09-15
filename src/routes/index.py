@@ -150,6 +150,12 @@ def get_ofertas_page():
 
 @index.route('/ofertas', methods=['POST'])
 def get_ofertas():
+    cache = current_app.config.get("OFFERS_CACHE")
+    if cache is not None:
+        payload = cache.load()
+        if payload is not None:
+            return jsonify(payload)
+
     scrape = TriggerRunner(OFFER_SPIDERS, timeout=current_app.config["SPIDER_TIMEOUT"])
     try:
         result = scrape.run()

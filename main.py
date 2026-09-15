@@ -20,6 +20,11 @@ if __name__ == "__main__":
     load_dotenv()
     settings = Settings.from_env()
     app = create_app(settings)
+    # Daemon thread refreshes offers into data/offers.json every 24h.
+    from src.cache import start_offers_cache
+
+    cache = start_offers_cache(settings)
+    app.config["OFFERS_CACHE"] = cache
     print(
         f"Serving on http://{settings.host}:{settings.port} "
         f"(Waitress, debug={settings.debug})",

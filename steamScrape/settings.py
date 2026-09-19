@@ -108,5 +108,12 @@ DOWNLOAD_DELAY = float(os.environ.get("DOWNLOAD_DELAY", "1"))
 # Set settings whose default value is deprecated to a future-proof value
 # REQUEST_FINGERPRINTER_IMPLEMENTATION is the Scrapy 2.12+ default; the
 # setting itself is deprecated and must not be set explicitly.
-#TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
+#
+# Reactor ownership (REQ-ASM-5): src/triggers.py calls crochet.setup() and
+# owns the Twisted reactor lifecycle. Scrapy 2.13+ changed the TWISTED_REACTOR
+# default to the asyncio reactor and verifies the installed one, which fails
+# against crochet's already-installed reactor ("does not match the requested
+# one"). Keep it explicitly None so Scrapy never installs or verifies a reactor
+# of its own and uses the one crochet already set up.
+TWISTED_REACTOR = None
 FEED_EXPORT_ENCODING = "utf-8"

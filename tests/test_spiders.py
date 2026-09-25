@@ -75,6 +75,16 @@ class TestSteamSpider:
             }
         }
 
+    def test_parse_uses_data_price_final_when_text_is_whitespace(self) -> None:
+        # Steam's 2025+ markup puts the price inside a child span, so
+        # ``.price::text`` yields only whitespace. The ``data-price-final``
+        # cents attribute must win (12567 -> 125.67), not "empty price".
+        spider = SteamSpider(juego="cyberpunk 2077")
+        response = make_html(GAME_URL, "html/steam_game_data_price.html")
+        (result,) = list(spider.parse(response))
+        assert result["steam"]["precio"] == 44.99
+        assert result["steam"]["descuento"] is None
+
     def test_parse_with_discount(self) -> None:
         spider = SteamSpider(juego="half-life 2")
         response = make_html(GAME_URL, "html/steam_game_discount.html")

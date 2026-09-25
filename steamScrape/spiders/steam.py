@@ -17,11 +17,34 @@ logger = logging.getLogger(__name__)
 
 
 def _parse_price(value: str | None) -> float:
-    """Convert a store price string (``$19.99``) to float."""
-    cleaned = (value or "").replace("$", "").strip()
+    """Convert a store price string (``$19.99``, ``19,99 EUR``) to float.
+
+    Whitespace-only or non-numeric values raise ``ValueError`` so the caller
+    logs a malformed-price warning and skips the item (REQ-TST-4). The regex
+    extraction tolerates trailing currency suffixes and locale decimal commas.
+    """
+    cleaned = (value or "").strip().replace("\xa0", " ")
     if not cleaned:
         raise ValueError("empty price")
-    return float(cleaned.split()[0])
+    match = re.search(r"\d+(?:[.,]\d+)?", cleaned)
+    if not match:
+        raise ValueError("empty price")
+    return float(match.group(0).replace(",", "."))
+
+
+def _price_from_cents(value: str | None) -> float:
+    """Convert Steam's ``data-price-*`` cents attribute (``"4499"``) to float.
+
+    Steam serves these attributes on modern page markup even when the price
+    text lives inside a child node, so prefer them over ``::text``.
+    """
+    cleaned = (value or "").strip()
+    if not cleaned:
+        raise ValueError("empty price")
+    try:
+        return float(cleaned) / 100
+    except ValueError as exc:
+        raise ValueError("empty price") from exc
 
 
 class SteamSpider(scrapy.Spider):
@@ -78,17 +101,46 @@ class SteamSpider(scrapy.Spider):
         game["link"] = response.request.url
         game["img"] = response.css(".game_header_image_full::attr(src)").get()
 
-        # CHECK IF THERE'S A DISCOUNT
-        precio = response.css(
-            ".game_area_purchase_game_wrapper .game_area_purchase_game .price::text"
-        ).get()
-        if precio is None:
+        # CHECK IF THERE'S A DISCOUNT.
+        # Steam's 2025+ markup puts the price in a child node (often a span),
+        # so ``.price::text`` can match whitespace only. The ``data-price-final``
+        # / ``data-price-original`` cents attributes are the stable signal:
+        # prefer them, fall back to the text node.
+        wrapper = ".game_area_purchase_game_wrapper .game_area_purchase_game"
+        price_el = response.css(f"{wrapper} .price")
+        precio_cents = price_el.css("::attr(data-price-final)").get()
+        precio_text = price_el.css("::text").get()
+
+        if precio_cents is not None:
+            try:
+                game["precio"] = _price_from_cents(precio_cents)
+            except (TypeError, ValueError) as exc:
+                logger.warning("malformed price store=steam reason=%s", exc)
+                yield {"steam": None}
+                return
+            game["descuento"] = None
+        elif precio_text is not None:
+            try:
+                game["precio"] = _parse_price(precio_text)
+            except (TypeError, ValueError) as exc:
+                logger.warning("malformed price store=steam reason=%s", exc)
+                yield {"steam": None}
+                return
+            game["descuento"] = None
+        else:
             precio = response.css(
-                ".game_purchase_action .discount_original_price::text"
+                ".game_purchase_action .discount_original_price::attr(data-price-original)"
             ).get()
             descuento = response.css(
-                ".game_purchase_action .discount_final_price::text"
+                ".game_purchase_action .discount_final_price::attr(data-price-final)"
             ).get()
+            if precio is None or descuento is None:
+                precio = response.css(
+                    ".game_purchase_action .discount_original_price::text"
+                ).get()
+                descuento = response.css(
+                    ".game_purchase_action .discount_final_price::text"
+                ).get()
             try:
                 game["precio"] = _parse_price(precio)
                 game["descuento"] = _parse_price(descuento)
@@ -96,13 +148,5 @@ class SteamSpider(scrapy.Spider):
                 logger.warning("malformed price store=steam reason=%s", exc)
                 yield {"steam": None}
                 return
-        else:
-            try:
-                game["precio"] = _parse_price(precio)
-            except (TypeError, ValueError) as exc:
-                logger.warning("malformed price store=steam reason=%s", exc)
-                yield {"steam": None}
-                return
-            game["descuento"] = None
 
         yield {"steam": dict(game)}

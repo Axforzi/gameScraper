@@ -5,6 +5,7 @@ Malformed offers are logged and skipped instead of crashing the crawl
 """
 
 import logging
+import re
 
 import scrapy
 
@@ -16,11 +17,19 @@ logger = logging.getLogger(__name__)
 
 
 def _parse_price(value: str | None) -> float:
-    """Convert a store price string (``$19.99``) to float."""
-    cleaned = (value or "").replace("$", "").strip()
+    """Convert a store price string (``$19.99``, ``19,99 EUR``) to float.
+
+    Whitespace-only or non-numeric values raise ``ValueError`` so the caller
+    logs a malformed-price warning and skips the item (REQ-TST-4). The regex
+    extraction tolerates trailing currency suffixes and locale decimal commas.
+    """
+    cleaned = (value or "").strip().replace("\xa0", " ")
     if not cleaned:
         raise ValueError("empty price")
-    return float(cleaned.split()[0])
+    match = re.search(r"\d+(?:[.,]\d+)?", cleaned)
+    if not match:
+        raise ValueError("empty price")
+    return float(match.group(0).replace(",", "."))
 
 
 class OffersSteamSpider(scrapy.Spider):

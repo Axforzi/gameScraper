@@ -116,4 +116,8 @@ DOWNLOAD_DELAY = float(os.environ.get("DOWNLOAD_DELAY", "1"))
 # one"). Keep it explicitly None so Scrapy never installs or verifies a reactor
 # of its own and uses the one crochet already set up.
 TWISTED_REACTOR = None
+# RemoteControl (Scrapy 2.19+) requires the asyncio reactor, which is disabled
+# here because crochet owns the reactor. Disable it to drop the per-spider
+# warning; the app never uses remote control.
+REMOTE_CONTROL_ENABLED = False
 FEED_EXPORT_ENCODING = "utf-8"

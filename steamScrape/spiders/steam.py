@@ -6,6 +6,7 @@ of crashing the crawl (REQ-TST-4).
 
 import logging
 import re
+from urllib.parse import quote
 
 import scrapy
 
@@ -14,6 +15,14 @@ from src.config import Settings
 from ..items import Juego
 
 logger = logging.getLogger(__name__)
+
+# Typo-tolerant search (Google Suggest): Steam's own search and autocomplete
+# return nothing for misspelled terms ("cyberpynk"), so when the Steam search
+# page has no results we ask Google's public autocomplete endpoint for the
+# closest real title and re-run the search with the correction. No API key.
+GOOGLE_SUGGEST_URL = (
+    "https://suggestqueries.google.com/complete/search?client=firefox&q="
+)
 
 
 def _parse_price(value: str | None) -> float:
@@ -100,8 +109,36 @@ class SteamSpider(scrapy.Spider):
                 headers=self.headersConfig,
                 callback=self.parse,
             )
-        else:
+        elif response.meta.get("corrected"):
+            # Second attempt after a typo correction also found nothing.
             yield {"steam": None}
+        else:
+            # No results: Steam does not tolerate typos ("cyberpynk").
+            # Ask Google Suggest for the closest real title and retry once.
+            yield scrapy.Request(
+                GOOGLE_SUGGEST_URL + quote(self.juego),
+                headers=self.headersConfig,
+                callback=self._correct_term,
+            )
+
+    def _correct_term(self, response):
+        """First Google Suggest suggestion != original term -> re-search Steam."""
+        try:
+            suggestions = response.json()[1]
+        except (ValueError, IndexError, TypeError):
+            suggestions = []
+        corrected = str(suggestions[0]).strip() if suggestions else ""
+        if not corrected or corrected.lower() == self.juego.lower():
+            yield {"steam": None}
+            return
+        yield scrapy.Request(
+            "https://store.steampowered.com/search/"
+            f"?term={quote(corrected)}&category1=998&os=win&hidef2p=1&ndl=1",
+            cookies=self.cookiesConfig,
+            headers=self.headersConfig,
+            callback=self.search_game,
+            meta={"corrected": True},
+        )
 
     def parse(self, response):
         game = Juego()

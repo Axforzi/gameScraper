@@ -52,13 +52,60 @@ class TestSteamSpider:
         assert request.url == "https://store.steampowered.com/app/123456/Portal/"
         assert request.callback == spider.parse
 
-    def test_search_without_results_yields_none(self) -> None:
-        spider = SteamSpider(juego="doesnotexist")
+    def test_search_without_results_asks_for_typo_correction(self) -> None:
+        spider = SteamSpider(juego="cyberpynk 2077")
         response = make_html(
-            "https://store.steampowered.com/search/?term=doesnotexist",
+            "https://store.steampowered.com/search/?term=cyberpynk+2077",
             "html/steam_search_empty.html",
         )
+        (request,) = list(spider.search_game(response))
+        assert isinstance(request, scrapy.Request)
+        assert request.url.startswith(
+            "https://suggestqueries.google.com/complete/search?client=firefox&q="
+        )
+        assert request.callback == spider._correct_term
+
+    def test_search_corrected_still_empty_yields_none(self) -> None:
+        spider = SteamSpider(juego="cyberpynk 2077")
+        response = make_html(
+            "https://store.steampowered.com/search/?term=cyberpunk+2077",
+            "html/steam_search_empty.html",
+            request=scrapy.Request(
+                "https://store.steampowered.com/search/?term=cyberpunk+2077",
+                meta={"corrected": True},
+            ),
+        )
         assert list(spider.search_game(response)) == [{"steam": None}]
+
+    def test_correct_term_yields_steam_search_with_suggestion(self) -> None:
+        spider = SteamSpider(juego="cyberpynk 2077")
+        response = make_json(
+            "https://suggestqueries.google.com/complete/search",
+            "json/google_suggest_typo.json",
+        )
+        (request,) = list(spider._correct_term(response))
+        assert isinstance(request, scrapy.Request)
+        assert "term=cyberpunk%202077" in request.url
+        assert request.callback == spider.search_game
+        assert request.meta.get("corrected") is True
+
+    def test_correct_term_no_suggestion_yields_none(self) -> None:
+        # Suggestion identical to the typed term counts as no correction.
+        spider = SteamSpider(juego="cyberpunk 2077")
+        response = make_json(
+            "https://suggestqueries.google.com/complete/search",
+            "json/google_suggest_typo.json",
+        )
+        assert list(spider._correct_term(response)) == [{"steam": None}]
+
+    def test_correct_term_malformed_json_yields_none(self) -> None:
+        spider = SteamSpider(juego="cyberpynk 2077")
+        response = TextResponse(
+            url="https://suggestqueries.google.com/complete/search",
+            body=b"not json",
+            encoding="utf-8",
+        )
+        assert list(spider._correct_term(response)) == [{"steam": None}]
 
     def test_parse_without_discount(self) -> None:
         spider = SteamSpider(juego="test game")

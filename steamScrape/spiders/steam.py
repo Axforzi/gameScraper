@@ -62,7 +62,7 @@ class SteamSpider(scrapy.Spider):
             f"?term={self.juego}&category1=998&os=win&hidef2p=1&ndl=1"
         ]
 
-    def start_requests(self):
+    def _initial_requests(self):
         for url in self.start_urls:
             yield scrapy.Request(
                 url,
@@ -70,6 +70,19 @@ class SteamSpider(scrapy.Spider):
                 headers=self.headersConfig,
                 callback=self.search_game,
             )
+
+    async def start(self):
+        # Scrapy >= 2.13 calls the async ``start()`` generator instead of the
+        # legacy sync ``start_requests()``; without this override the engine
+        # falls back to the base Spider.start(), which schedules start_urls
+        # with the default ``parse`` callback and the search page never reaches
+        # ``search_game``.
+        for request in self._initial_requests():
+            yield request
+
+    def start_requests(self):
+        # Kept for Scrapy < 2.13 compatibility and direct-call tests.
+        yield from self._initial_requests()
 
     def search_game(self, response):
         url = response.css(

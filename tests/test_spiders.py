@@ -100,6 +100,35 @@ class TestSteamSpider:
         assert "malformed price" in caplog.text
 
 
+class TestSteamSpiderScrapy219Start:
+    """Regression for the Scrapy 2.19 silent breakage of ``start_requests()``.
+
+    Scrapy >= 2.13 replaced ``start_requests()`` with the async ``start()``
+    generator; the engine never calls the legacy sync method, so a spider that
+    only overrides ``start_requests()`` falls back to ``Spider.start()``, which
+    schedules ``start_urls`` with the default ``parse`` callback. The Steam
+    search page then reaches ``parse`` without any price selectors and emits
+    ``malformed price store=steam reason=empty price``.
+    """
+
+    def test_start_yields_request_with_search_game_callback(self) -> None:
+        import asyncio
+
+        spider = SteamSpider(juego="cyberpunk 2077")
+
+        async def collect():
+            return [request async for request in spider.start()]
+
+        requests = asyncio.run(collect())
+        assert len(requests) == 1
+        request = requests[0]
+        assert request.callback == spider.search_game
+        assert request.cookies == spider.cookiesConfig
+        accept_language = request.headers.get("Accept-Language")
+        assert accept_language is not None
+        assert "es-ES" in accept_language.decode()
+
+
 class TestGogSpider:
     def test_parse_matches_roman_numeral_product(self) -> None:
         spider = GogSpider(juego="final fantasy 4")
